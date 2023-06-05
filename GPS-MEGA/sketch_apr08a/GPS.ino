@@ -1,47 +1,74 @@
 void calibrateCompass()                                           // Experimental Use Only to Calibrate Magnetometer/ Compass
 {
-  int minX = 0;
-  int maxX = 0;
-  int offX = 0;
+  int x, y, z;
+  
+  // Read compass values
+  compass.read();
 
-  int minY = 0;
-  int maxY = 0;
-  int offY = 0; 
+  // Return XYZ readings
+  x = compass.getX();
+  y = compass.getY();
+  z = compass.getZ();
 
-  int minZ = 0;
-  int maxZ = 0;
-  int offZ = 0; 
+  changed = false;
 
-  for (int i=1000; i >= 1; i--) 
-  {
-    Vector mag = compass.readRaw();                                 // Read compass data
-    
-    // Determine Min / Max values
-    if (mag.XAxis < minX) minX = mag.XAxis;
-    if (mag.XAxis > maxX) maxX = mag.XAxis;
-    if (mag.YAxis < minY) minY = mag.YAxis;
-    if (mag.YAxis > maxY) maxY = mag.YAxis;
-
-    if (mag.ZAxis < minZ) minZ = mag.ZAxis;
-    if (mag.ZAxis > maxZ) maxZ = mag.ZAxis;
-    
-    offX = (maxX + minX)/2;                                         // Calculate offsets
-    offY = (maxY + minY)/2;
-    offZ = (maxZ + minZ)/2;
-    
-    delay(10);
+  if(x < calibrationData[0][0]) {
+    calibrationData[0][0] = x;
+    changed = true;
+  }
+  if(x > calibrationData[0][1]) {
+    calibrationData[0][1] = x;
+    changed = true;
   }
 
-  Serial1.print("Compass X & Y offset: ");
-  Serial1.print(offX);
-  Serial1.print(" ");
-  Serial1.print(offY);
-  Serial.print("\n");
-  compass.setOffset(offX, offY, offZ);                                  // Set calibration offset
+  if(y < calibrationData[1][0]) {
+    calibrationData[1][0] = y;
+    changed = true;
+  }
+  if(y > calibrationData[1][1]) {
+    calibrationData[1][1] = y;
+    changed = true;
+  }
+
+  if(z < calibrationData[2][0]) {
+    calibrationData[2][0] = z;
+    changed = true;
+  }
+  if(z > calibrationData[2][1]) {
+    calibrationData[2][1] = z;
+    changed = true;
+  }
+
+  if (changed && !done) {
+    Serial.println("CALIBRATING... Keep moving your sensor around.");
+    c = millis();
+  }
+    t = millis();
+  
+  
+  if ( (t - c > 5000) && !done) {
+    done = true;
+    Serial.println("DONE. Copy the line below and paste it into your projects sketch.);");
+    Serial.println();
+      
+    Serial.print("compass.setCalibration(");
+    Serial.print(calibrationData[0][0]);
+    Serial.print(", ");
+    Serial.print(calibrationData[0][1]);
+    Serial.print(", ");
+    Serial.print(calibrationData[1][0]);
+    Serial.print(", ");
+    Serial.print(calibrationData[1][1]);
+    Serial.print(", ");
+    Serial.print(calibrationData[2][0]);
+    Serial.print(", ");
+    Serial.print(calibrationData[2][1]);
+    Serial.println(");");
+    }
 }
 
 void getGPS()                                                 // Get Latest GPS coordinates
 {
-  while (Serial1.available() > 0)
+  while (Serial1.available())
     gps.encode(Serial1.read());
 } 
