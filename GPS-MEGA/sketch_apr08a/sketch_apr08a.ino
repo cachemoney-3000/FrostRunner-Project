@@ -1,7 +1,10 @@
 #include <TinyGPS++.h>
 #include <math.h>
+
 #include <Wire.h>
-#include <QMC5883LCompass.h>    
+#include <QMC5883LCompass.h>
+
+#include "./Definitions.h"
 
 //******************************************************************************************************                                                                  
 // GPS Variables & Setup
@@ -9,27 +12,22 @@ int GPS_Course;       // variable to hold the gps's determined course to destina
 int Number_of_SATS;   // variable to hold the number of satellites acquired
 TinyGPSPlus gps;      // gps = instance of TinyGPS
 
-unsigned long distanceFromUser;
-int arrayCounter = 0;
+
+Waypoint waypoint;
+int frontIndex = 0;
+int rearIndex = -1;
 int waypointCounter = 0;
-double userLatitudeArray[10];
-double userLongitudeArray[10];
+
+int bluetoothReadFlag = 0;
+
 
 //******************************************************************************************************     
 String location="";
-String longitude = "";
-String latitude = "";
 double targetLatitude = 28.59108000;
 double targetLongitude = -81.46820800;
 //******************************************************************************************************
 // Compass Variables & Setup
-
-QMC5883LCompass  compass;     // HMC5883L compass(HMC5883L)
-int calibrationData[3][2];
-bool changed = false;
-bool done = false;
-int t = 0;
-int c = 0;
+QMC5883LCompass compass;
 
 
 void setup()
@@ -43,18 +41,16 @@ void setup()
   Serial2.begin(9600);  // Bluetooth
   Serial.println("Mega up ");  // SERIAL PRINTS
 
-  
   Wire.begin();
-  // Initialize the Compass.
-  compass.init();
-
-  Startup();
+  compass.init(); // Initialize the Compass.
+  
+  Startup();  // Startup procedure
+  
 }
 
 
 void loop()
 {
-  
   return 0;
 }
 

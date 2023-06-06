@@ -17,21 +17,13 @@ void Startup()
       
   while (Number_of_SATS <= 4)                         // Wait until x number of satellites are acquired before starting main loop
   {       
-    getGPS();
+    checkGPS();
     Number_of_SATS = (int)(gps.satellites.value());   // Query Tiny GPS for the number of Satellites Acquired
-
   }    
-  //setWaypoint();                                      // set intial waypoint to current location
-  //wpCount = 0;                                        // zero waypoint counter
-  //ac = 0;                                             // zero array counter
   
-  Serial.print(Number_of_SATS);
-  Serial.println(" Satellites Acquired");    
 
-  Serial2.print(Number_of_SATS);
-  Serial2.println(" Satellites and User Location Acquired");    
-
-  
+  Serial.println(String(Number_of_SATS) + " Satellites Acquired");
+  Serial2.println(String(Number_of_SATS) + " Satellites Acquired");     
 }    
 
 

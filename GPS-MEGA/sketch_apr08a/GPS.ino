@@ -1,74 +1,38 @@
-void calibrateCompass()                                           // Experimental Use Only to Calibrate Magnetometer/ Compass
+// Get Latest GPS coordinates
+bool checkGPS()
 {
-  int x, y, z;
-  
-  // Read compass values
-  compass.read();
+  while (Serial1.available()){
+    if(gps.encode(Serial1.read())){
+      return true;
+    };
+  }
+  return false;
+} 
 
-  // Return XYZ readings
-  x = compass.getX();
-  y = compass.getY();
-  z = compass.getZ();
+// Get and process GPS data
+Location gpsdump() {
+  Location robotLoc;
+  robotLoc.latitude = gps.location.lat();
+  robotLoc.longitude = gps.location.lng();
 
-  changed = false;
+  Serial.print(robotLoc.latitude, 7); Serial.print(", "); Serial.println(robotLoc.longitude, 7);
 
-  if(x < calibrationData[0][0]) {
-    calibrationData[0][0] = x;
-    changed = true;
-  }
-  if(x > calibrationData[0][1]) {
-    calibrationData[0][1] = x;
-    changed = true;
-  }
-
-  if(y < calibrationData[1][0]) {
-    calibrationData[1][0] = y;
-    changed = true;
-  }
-  if(y > calibrationData[1][1]) {
-    calibrationData[1][1] = y;
-    changed = true;
-  }
-
-  if(z < calibrationData[2][0]) {
-    calibrationData[2][0] = z;
-    changed = true;
-  }
-  if(z > calibrationData[2][1]) {
-    calibrationData[2][1] = z;
-    changed = true;
-  }
-
-  if (changed && !done) {
-    Serial.println("CALIBRATING... Keep moving your sensor around.");
-    c = millis();
-  }
-    t = millis();
-  
-  
-  if ( (t - c > 5000) && !done) {
-    done = true;
-    Serial.println("DONE. Copy the line below and paste it into your projects sketch.);");
-    Serial.println();
-      
-    Serial.print("compass.setCalibration(");
-    Serial.print(calibrationData[0][0]);
-    Serial.print(", ");
-    Serial.print(calibrationData[0][1]);
-    Serial.print(", ");
-    Serial.print(calibrationData[1][0]);
-    Serial.print(", ");
-    Serial.print(calibrationData[1][1]);
-    Serial.print(", ");
-    Serial.print(calibrationData[2][0]);
-    Serial.print(", ");
-    Serial.print(calibrationData[2][1]);
-    Serial.println(");");
-    }
+  return robotLoc;
 }
 
-void getGPS()                                                 // Get Latest GPS coordinates
-{
-  while (Serial1.available())
-    gps.encode(Serial1.read());
-} 
+Location getGPS() {
+  Serial.println("Reading onboard GPS: ");
+  unsigned long start = millis();
+  while (millis() - start < GPS_UPDATE_INTERVAL) {
+    // If we recieved new location then take the coordinates and pack them into a struct
+    if (checkGPS())
+      return gpsdump();
+  }
+
+  Location robotLoc;
+  robotLoc.latitude = 0.0;
+  robotLoc.longitude = 0.0;
+  
+  return robotLoc;
+}
+
