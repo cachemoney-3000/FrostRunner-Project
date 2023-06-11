@@ -24,11 +24,11 @@
 // You must then add your 'Declination Angle' to the compass, which is the 'Error' of the magnetic field in your location.
 // Find yours here: http://www.magnetic-declination.com/
 // Mine is: 13° 24' E (Positive), which is ~13 Degrees, or (which we need) 0.23 radians
-#define DECLINATION_ANGLE -0.17f
+#define DECLINATION_ANGLE -0.07f
 
 // The offset of the mounting position to true north
 // It would be best to run the /examples/magsensor sketch and compare to the compass on your smartphone
-#define COMPASS_OFFSET 0.35f
+#define COMPASS_OFFSET 0.01f
 
 // How often the GPS should update in MS
 // Keep this above 1000
@@ -36,7 +36,7 @@
 
 // Number of changes in movement to timeout for GPS waypoints
 // Keeps the robot from driving away if there is a problem
-#define GPS_WAYPOINT_TIMEOUT 25
+#define GPS_WAYPOINT_TIMEOUT 1000
 
 
 #define MAX_WAYPOINTS 10
@@ -51,3 +51,7 @@ struct Waypoint {
   double LatitudeArray[MAX_WAYPOINTS];
   double LongitudeArray[MAX_WAYPOINTS];
 };
+
+
+#define DEGTORAD 0.0174532925199432957f
+#define RADTODEG 57.295779513082320876f

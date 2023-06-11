@@ -23,11 +23,12 @@ int bluetoothReadFlag = 0;
 
 //******************************************************************************************************     
 String location="";
-double targetLatitude; // = 28.59108000;
-double targetLongitude; // = -81.46820800;
+double targetLatitude = 0; // = 28.59108000;
+double targetLongitude = 0; // = -81.46820800;
 //******************************************************************************************************
 // Compass Variables & Setup
 QMC5883LCompass compass;
+
 
 
 void setup()
@@ -80,48 +81,12 @@ void loop()
     }
   }
 
-  Location phoneLoc;
-  phoneLoc.latitude = targetLatitude.toDouble();
-  phoneLoc.longitude = targetLongitude.toDouble();
+  if (targetLatitude != 0 && targetLongitude != 0){
+    Location phoneLoc;
+    phoneLoc.latitude = targetLatitude;
+    phoneLoc.longitude = targetLongitude;
 
-  driveTo(phoneLoc, GPS_WAYPOINT_TIMEOUT);
-}
-
-void driveTo(struct GeoLoc &loc, int timeout) {
-  Serial1.listen();
-  GeoLoc robotLoc = getGPS();
-  Serial2.listen();
-
-  if (robotLoc.lat != 0 && robotLoc.lon != 0) {
-    float distance = 0;
-    //Start move loop here
-    do {
-      Serial1.listen();
-      robotLoc = getGPS();
-      Serial2.listen();
-      
-      // TODO geoDistance
-      distance = geoDistance(robotLoc, loc);
-      // TODO geoBearing, heoHeading
-      float bearing = geoBearing(robotLoc, loc) - geoHeading();
-      
-      Serial.print("Distance: ");
-      Serial.println(distance);
-    
-      Serial.print("Bearing: ");
-      Serial.println(geoBearing(robotLoc, loc));
-
-      Serial.print("Heading: ");
-      Serial.println(geoHeading());
-      
-      // TODO drive
-      drive(distance, bearing);
-      timeout -= 1;
-    } while (distance > 1.0 && timeout > 0);
-
-    // TODO stop
-    stop();
+    driveTo(phoneLoc, GPS_WAYPOINT_TIMEOUT);
   }
 }
-
 
