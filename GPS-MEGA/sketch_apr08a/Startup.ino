@@ -35,10 +35,10 @@ void displayInfo()
   //gps.location.isValid()
   if (gps.location.isValid())
   {
-    double currentLatitude = gps.location.lat();
-    double currentLongitude = gps.location.lng();
-    //double currentLatitude = 28.59111022;
-    //double currentLongitude = -81.46820831;
+    float currentLatitude = gps.location.lat();
+    float currentLongitude = gps.location.lng();
+    //float currentLatitude = 28.59111022;
+    //float currentLongitude = -81.46820831;
 
     
     Serial.print("Latitude: ");
@@ -46,7 +46,7 @@ void displayInfo()
     Serial.print("Longitude: ");
     Serial.println(currentLongitude, 8);
 
-    double Distance_To_Home = TinyGPSPlus::distanceBetween(currentLatitude, currentLongitude, targetLatitude, targetLongitude);  //Query Tiny GPS for Distance to Destination
+    float Distance_To_Home = TinyGPSPlus::distanceBetween(currentLatitude, currentLongitude, targetLatitude, targetLongitude);  //Query Tiny GPS for Distance to Destination
     int GPS_Course = TinyGPSPlus::courseTo(currentLatitude, currentLongitude, targetLatitude, targetLongitude);                           //Query Tiny GPS for Course to Destination   
 
     Serial.print("Distance to target (2): ");

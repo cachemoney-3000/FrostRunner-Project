@@ -23,8 +23,8 @@ int bluetoothReadFlag = 0;
 
 //******************************************************************************************************     
 String location="";
-double targetLatitude = 0; // = 28.59108000;
-double targetLongitude = 0; // = -81.46820800;
+float targetLatitude = 0; // = 28.59108000;
+float targetLongitude = 0; // = -81.46820800;
 //******************************************************************************************************
 // Compass Variables & Setup
 QMC5883LCompass compass;
@@ -64,15 +64,20 @@ void loop()
           String latitudeString = location.substring(separatorIndex + 1);
 
           // Convert latitude and longitude to float values
-          targetLatitude = latitudeString.toDouble();
-          targetLongitude = longitudeString.toDouble();
+          float newTargetLatitude = latitudeString.toDouble();
+          float newTargetLongitude = longitudeString.toDouble();
+
+          if (newTargetLatitude != targetLatitude || newTargetLongitude != targetLongitude) {
+            targetLatitude = newTargetLatitude;
+            targetLongitude = newTargetLongitude;
+
+            Serial.println("Target Longitude: " + String(targetLongitude, 8));
+            Serial.println("Target Latitude: " + String(targetLatitude, 8));
+
+            location = ""; // Reset the location buffer
+          }
         }
 
-        Serial.println("Target Longitude: " + String(targetLongitude, 8));
-        Serial.println("Target Latitude: " + String(targetLatitude, 8));
-
-        location = ""; // Reset the location buffer
-        
         break; // End transmission
       }
     }

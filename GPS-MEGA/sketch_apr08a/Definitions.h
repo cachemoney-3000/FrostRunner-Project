@@ -32,7 +32,7 @@
 
 // How often the GPS should update in MS
 // Keep this above 1000
-#define GPS_UPDATE_INTERVAL 1000
+#define GPS_UPDATE_INTERVAL 25
 
 // Number of changes in movement to timeout for GPS waypoints
 // Keeps the robot from driving away if there is a problem
@@ -43,13 +43,13 @@
 
 // Struct to combine our coordinates into one struct for ease of use
 struct Location {
-  double latitude;
-  double longitude;
+  float latitude;
+  float longitude;
 };
 
 struct Waypoint {
-  double LatitudeArray[MAX_WAYPOINTS];
-  double LongitudeArray[MAX_WAYPOINTS];
+  float LatitudeArray[MAX_WAYPOINTS];
+  float LongitudeArray[MAX_WAYPOINTS];
 };
 
 

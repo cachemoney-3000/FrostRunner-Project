@@ -4,7 +4,7 @@ void driveTo(struct Location &phoneLoc, int timeout) {
   // Serial2.listen();
 
   if (robotLoc.latitude != 0 && robotLoc.longitude != 0) {
-    float distance = 0;
+    float distance = geoDistance(robotLoc, phoneLoc);;
     //Start move loop here
     do {
         // Serial1.listen();

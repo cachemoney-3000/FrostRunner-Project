@@ -27,6 +27,8 @@ Location getGPS() {
     // If we recieved new location then take the coordinates and pack them into a struct
     if (checkGPS())
       return gpsdump();
+
+    delay(100); // Small delay to allow the GPS module to provide updated data
   }
 
   Location robotLoc;
