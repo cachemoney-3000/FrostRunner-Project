@@ -26,8 +26,13 @@ void driveTo(struct Location &phoneLoc, int timeout) {
         Serial.println(geoHeading());
         
         // TODO drive
-        // drive(distance, bearing);
-        Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
+        
+        // Short distance only
+        if(distance < 100){
+          // drive(distance, bearing);
+          Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
+        }
+        
 
         timeout -= 1;
     } while (distance > 1.0 && timeout > 0);

@@ -32,11 +32,11 @@
 
 // How often the GPS should update in MS
 // Keep this above 1000
-#define GPS_UPDATE_INTERVAL 25
+#define GPS_UPDATE_INTERVAL 1000
 
 // Number of changes in movement to timeout for GPS waypoints
 // Keeps the robot from driving away if there is a problem
-#define GPS_WAYPOINT_TIMEOUT 1000
+#define GPS_WAYPOINT_TIMEOUT 25
 
 
 #define MAX_WAYPOINTS 10
