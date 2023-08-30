@@ -1,3 +1,4 @@
+// Go to the location specified by phoneLoc (latitude, longitude)
 void driveTo(struct Location &phoneLoc, int timeout) {
   // Serial1.listen();
   Location robotLoc = getGPS();
@@ -25,14 +26,9 @@ void driveTo(struct Location &phoneLoc, int timeout) {
         Serial.print("Heading: ");
         Serial.println(geoHeading());
         
-        // TODO drive
-        
-        // Short distance only
-        if(distance < 100){
-          // drive(distance, bearing);
-          Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
-        }
-        
+        // TODO drive -> Motor controls
+        drive(distance, bearing);
+        //Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
 
         timeout -= 1;
     } while (distance > 1.0 && timeout > 0);
@@ -81,7 +77,7 @@ float geoHeading() {
     heading -= 2 * PI;
 
     // Convert radians to degrees for readability.
-    float headingDegrees = heading * 180 / M_PI; 
+    float headingDegrees = heading * 180 / PI; 
 
     // Map to -180 - 180
     while (headingDegrees < -180) headingDegrees += 360;
