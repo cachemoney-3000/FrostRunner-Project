@@ -6,6 +6,10 @@
 
 #include "./Definitions.h"
 
+#include <avr/wdt.h>
+#include "Motor_DeviceDriverSet.h"
+#include "Motor_AppFunctionSet.cpp"
+
 //******************************************************************************************************                                                                  
 // GPS Variables & Setup
 int GPS_Course;       // variable to hold the gps's determined course to destination
@@ -29,13 +33,17 @@ float targetLongitude = 0; // = -81.46820800;
 // Compass Variables & Setup
 QMC5883LCompass compass;
 
-
+// Motor controls
+DeviceDriverSet_Motor AppMotor;
+Movement FrostRunner_Movements;
 
 void setup()
 {
   // Start the Arduino hardware serial port at 9600 baud
   Serial.begin(115200);                                            // Serial 0 is for communication with the computer
 
+  // Motor
+  AppMotor.DeviceDriverSet_Motor_Init();
 
   // Start the software serial port at the GPS's default baud (18, 19)
   Serial1.begin(9600);  // GPS
@@ -44,6 +52,13 @@ void setup()
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
+
+  delay(2000);
+  for (FrostRunner_Movements.Motion_Control = 0; FrostRunner_Movements.Motion_Control < 9; FrostRunner_Movements.Motion_Control = FrostRunner_Movements.Motion_Control + 1)
+  {
+    MovementInstruction(FrostRunner_Movements.Motion_Control /*direction*/, 255 /*speed*/);
+    delay(1000);
+  }
   
   Startup();  // Startup procedure
   
