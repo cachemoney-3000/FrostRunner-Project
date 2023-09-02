@@ -24,6 +24,7 @@ int waypointCounter = 0;
 
 int bluetoothReadFlag = 0;
 
+int movementInstruction = 0;
 
 //******************************************************************************************************     
 String location="";
@@ -52,25 +53,108 @@ void setup()
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
-
-  delay(2000);
-  for (FrostRunner_Movements.Motion_Control = 0; FrostRunner_Movements.Motion_Control < 9; FrostRunner_Movements.Motion_Control = FrostRunner_Movements.Motion_Control + 1)
-  {
-    MovementInstruction(FrostRunner_Movements.Motion_Control /*direction*/, 255 /*speed*/);
-    delay(1000);
-  }
-  
-  Startup();  // Startup procedure
-  
+  //Startup();  // Startup procedure
 }
 
 
 void loop()
 {
   while (Serial2.available() > 0){
-    char receivedChar = Serial2.read();
+    String data = Serial2.readStringUntil('\n');
+    Serial.println(data);
 
-    if (receivedChar == '/') {
+    // Movement Instructions
+    if(data.startsWith("M")){
+      String instructionStr = data.substring(1); // Remove the "M" prefix
+      movementInstruction = instructionStr.toInt(); // Convert to an integer
+      FrostRunnerMovement instruction = convertToMovement(movementInstruction);
+
+      switch (movementInstruction) {
+        case 1:
+          // Forward
+          Serial.println("Moving Forward");
+          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          // Add your code to move forward here
+          break;
+        case 2:
+          // Backward
+          Serial.println("Moving Backward");
+          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          // Add your code to move backward here
+          break;
+        case 3:
+          // Left
+          Serial.println("Turning Left");
+          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          // Add your code to turn left here
+          break;
+        case 4:
+          // Right
+          Serial.println("Turning Right");
+          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          // Add your code to turn right here
+          break;
+        case 5:
+          // LeftForward
+          Serial.println("Moving Left Forward");
+          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          // Add your code to move left forward here
+          break;
+        case 6:
+          // LeftBackward
+          Serial.println("Moving Left Backward");
+          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          // Add your code to move left backward here
+          break;
+        case 7:
+          // RightForward
+          Serial.println("Moving Right Forward");
+          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          // Add your code to move right forward here
+          break;
+        case 8:
+          // RightBackward
+          Serial.println("Moving Right Backward");
+          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          // Add your code to move right backward here
+          break;
+        case 9:
+          // Stop
+          Serial.println("Stopping");
+          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          // Add your code to stop here
+          break;
+        default:
+          Serial.println("Invalid Movement Instruction");
+          break;
+      }
+    }
+    // Summon Instructions, Get the GPS coordinate from user's phone
+    else {
+      int separatorIndex = data.indexOf('/');
+      // Split the location string into longitude and latitude
+      if (separatorIndex != -1) {
+        String longitudeStr = data.substring(0, separatorIndex);
+        String latitudeStr = data.substring(separatorIndex + 1);
+
+        // Convert latitude and longitude to float values
+        float newTargetLatitude = latitudeStr.toDouble();
+        float newTargetLongitude = longitudeStr.toDouble();
+
+        if (newTargetLatitude != targetLatitude || newTargetLongitude != targetLongitude) {
+          targetLatitude = newTargetLatitude;
+          targetLongitude = newTargetLongitude;
+
+          Location phoneLoc;
+          phoneLoc.latitude = targetLatitude;
+          phoneLoc.longitude = targetLongitude;
+
+          Serial.println("Target Longitude: " + String(targetLongitude, 8));
+          Serial.println("Target Latitude: " + String(targetLatitude, 8));
+        }
+      }
+    }
+    /* if (receivedChar == '/') {
       if (location != "") {
         // Split the location string into longitude and latitude
         int separatorIndex = location.indexOf('\n');
@@ -98,15 +182,15 @@ void loop()
     }
     else {
       location += receivedChar;
-    }
+    } */
   }
 
-  if (targetLatitude != 0 && targetLongitude != 0){
+  /* if (targetLatitude != 0 && targetLongitude != 0){
     Location phoneLoc;
     phoneLoc.latitude = targetLatitude;
     phoneLoc.longitude = targetLongitude;
 
     driveTo(phoneLoc, GPS_WAYPOINT_TIMEOUT);
-  }
+  } */
 }
 

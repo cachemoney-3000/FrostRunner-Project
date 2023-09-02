@@ -23,6 +23,31 @@ struct Movement
 
 extern Movement Application_SmartRobotCarxxx0;
 
+static FrostRunnerMovement convertToMovement(int instruction) {
+  switch (instruction) {
+    case 1:
+      return Forward;
+    case 2:
+      return Backward;
+    case 3:
+      return Left;
+    case 4:
+      return Right;
+    case 5:
+      return LeftForward;
+    case 6:
+      return LeftBackward;
+    case 7:
+      return RightForward;
+    case 8:
+      return RightBackward;
+    case 9:
+      return stop_it;
+    default:
+      return stop_it; // Default to Stop for invalid instructions
+  }
+}
+
 static void MovementInstruction(FrostRunnerMovement direction, uint8_t is_speed)
 {
   static uint8_t directionRecord = 0;
