@@ -37,6 +37,7 @@ QMC5883LCompass compass;
 // Motor controls
 DeviceDriverSet_Motor AppMotor;
 Movement FrostRunner_Movements;
+int motorSpeed = 255;
 
 void setup()
 {
@@ -62,6 +63,13 @@ void loop()
   while (Serial2.available() > 0){
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
+    if(data.startsWith("S")){
+      motorSpeed = data.substring(1).toInt();
+      Serial.println("Motor Speed = " + String(motorSpeed));
+      // Stop the robot to reset the speed
+      FrostRunnerMovement instruction = convertToMovement(9);
+      MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
+    }
 
     // Movement Instructions
     if(data.startsWith("M")){
@@ -73,55 +81,55 @@ void loop()
         case 1:
           // Forward
           Serial.println("Moving Forward");
-          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
           // Add your code to move forward here
           break;
         case 2:
           // Backward
           Serial.println("Moving Backward");
-          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
           // Add your code to move backward here
           break;
         case 3:
           // Left
           Serial.println("Turning Left");
-          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
           // Add your code to turn left here
           break;
         case 4:
           // Right
           Serial.println("Turning Right");
-          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
           // Add your code to turn right here
           break;
         case 5:
           // LeftForward
           Serial.println("Moving Left Forward");
-          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
           // Add your code to move left forward here
           break;
         case 6:
           // LeftBackward
           Serial.println("Moving Left Backward");
-          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
           // Add your code to move left backward here
           break;
         case 7:
           // RightForward
           Serial.println("Moving Right Forward");
-          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
           // Add your code to move right forward here
           break;
         case 8:
           // RightBackward
           Serial.println("Moving Right Backward");
-          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
           // Add your code to move right backward here
           break;
         case 9:
           // Stop
           Serial.println("Stopping");
-          MovementInstruction(instruction /*direction*/, 255 /*speed*/);
+          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
           // Add your code to stop here
           break;
         default:
