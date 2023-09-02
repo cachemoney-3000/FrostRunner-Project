@@ -1,17 +1,5 @@
 void Startup()
 {
-  //myservo.detach(); 
-  //Serial.println("Pause for Startup... ");
-  
-  /*
-  for (int i=5; i >= 1; i--)                       // Count down for X seconds
-  {         
-    Serial1.print("Pause for Startup... "); 
-    Serial1.print(i);
-    delay(1000);                                   // Delay for X seconds
-  }
-  */
-    
   Serial.println("Searching for Satellites "); 
   Serial2.println("Searching for Satellites "); 
       
@@ -21,7 +9,6 @@ void Startup()
     Number_of_SATS = (int)(gps.satellites.value());   // Query Tiny GPS for the number of Satellites Acquired
   }    
   
-
   Serial.println(String(Number_of_SATS) + " Satellites Acquired");
   Serial2.println(String(Number_of_SATS) + " Satellites Acquired");     
 }    

@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/samon/Desktop/Bluetooth+GPS/GPS-MEGA/sketch_apr08a",
-      "program": "c:/Users/samon/Desktop/Bluetooth+GPS/GPS-MEGA/sketch_apr08a/build/Debug/outDebug",
+      "cwd": "c:/Users/samon/Desktop/Bluetooth+GPS/FrostRunner",
+      "program": "c:/Users/samon/Desktop/Bluetooth+GPS/FrostRunner/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
