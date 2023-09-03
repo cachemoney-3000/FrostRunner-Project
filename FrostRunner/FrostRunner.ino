@@ -9,6 +9,7 @@
 #include <avr/wdt.h>
 #include "Motor_DeviceDriverSet.h"
 #include "Motor_AppFunctionSet.cpp"
+#include <Servo.h>
 
 //******************************************************************************************************                                                                  
 // GPS Variables & Setup
@@ -39,8 +40,13 @@ DeviceDriverSet_Motor AppMotor;
 Movement FrostRunner_Movements;
 int motorSpeed = 255;
 
+// Servo
+Servo servo;
+int servoInput = 150;  // Store the analog input value
+
 void setup()
 {
+  servo.attach(SERVO_PIN);  // Attach the servo to pin 9
   // Start the Arduino hardware serial port at 9600 baud
   Serial.begin(115200);                                            // Serial 0 is for communication with the computer
 
@@ -63,6 +69,21 @@ void loop()
   while (Serial2.available() > 0){
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
+
+    // Steering logic
+    if(data.startsWith("C")){
+      servoInput = data.substring(1).toInt();
+
+      // Map the analog input to the servo motor's range
+      int servoPosition = map(servoInput, 0, 300, 0, 180);
+
+      Serial.println("Servo Position = " + String(servoPosition));
+      
+      // Set the servo position
+      servo.write(servoPosition);
+    }
+
+    // Motor speed adjustment
     if(data.startsWith("S")){
       motorSpeed = data.substring(1).toInt();
       Serial.println("Motor Speed = " + String(motorSpeed));
@@ -162,43 +183,6 @@ void loop()
         }
       }
     }
-    /* if (receivedChar == '/') {
-      if (location != "") {
-        // Split the location string into longitude and latitude
-        int separatorIndex = location.indexOf('\n');
-        if (separatorIndex != -1) {
-          String longitudeString = location.substring(0, separatorIndex);
-          String latitudeString = location.substring(separatorIndex + 1);
-
-          // Convert latitude and longitude to float values
-          float newTargetLatitude = latitudeString.toDouble();
-          float newTargetLongitude = longitudeString.toDouble();
-
-          if (newTargetLatitude != targetLatitude || newTargetLongitude != targetLongitude) {
-            targetLatitude = newTargetLatitude;
-            targetLongitude = newTargetLongitude;
-
-            Serial.println("Target Longitude: " + String(targetLongitude, 8));
-            Serial.println("Target Latitude: " + String(targetLatitude, 8));
-
-            location = ""; // Reset the location buffer
-          }
-        }
-
-        break; // End transmission
-      }
-    }
-    else {
-      location += receivedChar;
-    } */
   }
-
-  /* if (targetLatitude != 0 && targetLongitude != 0){
-    Location phoneLoc;
-    phoneLoc.latitude = targetLatitude;
-    phoneLoc.longitude = targetLongitude;
-
-    driveTo(phoneLoc, GPS_WAYPOINT_TIMEOUT);
-  } */
 }
 
