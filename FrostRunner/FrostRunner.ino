@@ -1,14 +1,12 @@
 #include <TinyGPS++.h>
 #include <math.h>
+#include <AFMotor.h>
 
 #include <Wire.h>
 #include <QMC5883LCompass.h>
 
 #include "./Definitions.h"
 
-#include <avr/wdt.h>
-#include "Motor_DeviceDriverSet.h"
-#include "Motor_AppFunctionSet.cpp"
 #include <Servo.h>
 
 //******************************************************************************************************                                                                  
@@ -35,9 +33,10 @@ float targetLongitude = 0; // = -81.46820800;
 // Compass Variables & Setup
 QMC5883LCompass compass;
 
-// Motor controls
-DeviceDriverSet_Motor AppMotor;
-Movement FrostRunner_Movements;
+
+// Motor
+AF_DCMotor wheelLeft(1);
+AF_DCMotor wheelRight(2); 
 int motorSpeed = 255;
 
 // Servo
@@ -51,7 +50,7 @@ void setup()
   Serial.begin(115200);                                            // Serial 0 is for communication with the computer
 
   // Motor
-  AppMotor.DeviceDriverSet_Motor_Init();
+  //AppMotor.DeviceDriverSet_Motor_Init();
 
   // Start the software serial port at the GPS's default baud (18, 19)
   Serial1.begin(9600);  // GPS
@@ -74,13 +73,25 @@ void loop()
     if(data.startsWith("C")){
       servoInput = data.substring(1).toInt();
 
-      // Map the analog input to the servo motor's range
-      int servoPosition = map(servoInput, 0, 300, 0, 180);
+      // Calculate the difference from the center (150)
+      int steeringDifference = servoInput - 150;
 
-      Serial.println("Servo Position = " + String(servoPosition));
+      // Map the difference to the steering motor's speed
+      int steeringSpeed = map(steeringDifference, -150, 150, -255, 255);
+
+      Serial.println("Steering Speed = " + String(steeringSpeed));
       
-      // Set the servo position
-      servo.write(servoPosition);
+      // Set the steering motor speed
+      wheelLeft.setSpeed(abs(steeringSpeed)); // Use the absolute speed value
+
+      // Set the direction based on the steering speed (right or left)
+      if (steeringSpeed > 0) {
+        wheelLeft.run(FORWARD); // Right turn
+      } else if (steeringSpeed < 0) {
+        wheelLeft.run(BACKWARD); // Left turn
+      } else {
+        wheelLeft.run(RELEASE); // Stop the motor when speed is 0
+      }
     }
 
     // Motor speed adjustment
@@ -88,70 +99,37 @@ void loop()
       motorSpeed = data.substring(1).toInt();
       Serial.println("Motor Speed = " + String(motorSpeed));
       // Stop the robot to reset the speed
-      FrostRunnerMovement instruction = convertToMovement(9);
-      MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
+      wheelLeft.run(RELEASE);
+      wheelRight.run(RELEASE);
     }
 
     // Movement Instructions
     if(data.startsWith("M")){
       String instructionStr = data.substring(1); // Remove the "M" prefix
       movementInstruction = instructionStr.toInt(); // Convert to an integer
-      FrostRunnerMovement instruction = convertToMovement(movementInstruction);
-
+      //FrostRunnerMovement instruction = convertToMovement(movementInstruction);
+      uint8_t i;
       switch (movementInstruction) {
         case 1:
           // Forward
-          Serial.println("Moving Forward");
-          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
+          wheelLeft.run(FORWARD);
+          wheelRight.run(FORWARD);
+          wheelLeft.setSpeed(motorSpeed);
+          wheelRight.setSpeed(motorSpeed);
           // Add your code to move forward here
           break;
         case 2:
           // Backward
-          Serial.println("Moving Backward");
-          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
+	        wheelLeft.run(BACKWARD);
+          wheelRight.run(BACKWARD);
+          wheelLeft.setSpeed(motorSpeed);  
+          wheelRight.setSpeed(motorSpeed);
           // Add your code to move backward here
-          break;
-        case 3:
-          // Left
-          Serial.println("Turning Left");
-          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
-          // Add your code to turn left here
-          break;
-        case 4:
-          // Right
-          Serial.println("Turning Right");
-          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
-          // Add your code to turn right here
-          break;
-        case 5:
-          // LeftForward
-          Serial.println("Moving Left Forward");
-          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
-          // Add your code to move left forward here
-          break;
-        case 6:
-          // LeftBackward
-          Serial.println("Moving Left Backward");
-          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
-          // Add your code to move left backward here
-          break;
-        case 7:
-          // RightForward
-          Serial.println("Moving Right Forward");
-          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
-          // Add your code to move right forward here
-          break;
-        case 8:
-          // RightBackward
-          Serial.println("Moving Right Backward");
-          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
-          // Add your code to move right backward here
           break;
         case 9:
           // Stop
-          Serial.println("Stopping");
-          MovementInstruction(instruction /*direction*/, motorSpeed /*speed*/);
-          // Add your code to stop here
+          wheelLeft.run(RELEASE);
+          wheelRight.run(RELEASE);
           break;
         default:
           Serial.println("Invalid Movement Instruction");
