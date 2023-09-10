@@ -35,17 +35,18 @@ QMC5883LCompass compass;
 
 
 // Motor
-AF_DCMotor wheelLeft(1);
-AF_DCMotor wheelRight(2); 
-int motorSpeed = 255;
+AF_DCMotor rearLeftMotor(1);
+AF_DCMotor rearRightMotor(2); 
+AF_DCMotor steeringMotor(1);
 
-// Servo
-Servo servo;
-int servoInput = 150;  // Store the analog input value
+int steeringSpeed = 150;
+int motorSpeed = 255;
+int crawlSteerThreshold = 230;
+int negativeCrawlSteerThreshold = -230;
+
 
 void setup()
 {
-  servo.attach(SERVO_PIN);  // Attach the servo to pin 9
   // Start the Arduino hardware serial port at 9600 baud
   Serial.begin(115200);                                            // Serial 0 is for communication with the computer
 
@@ -70,27 +71,37 @@ void loop()
     Serial.println(data);
 
     // Steering logic
-    if(data.startsWith("C")){
-      servoInput = data.substring(1).toInt();
+    if (data.startsWith("C")) {
+      int servoInput = data.substring(1).toInt();
 
-      // Calculate the difference from the center (150)
-      int steeringDifference = servoInput - 150;
+      int steeringDifference = servoInput - 165;
 
       // Map the difference to the steering motor's speed
-      int steeringSpeed = map(steeringDifference, -150, 150, -255, 255);
+      int steeringInput = map(steeringDifference, -165, 165, -255, 255);
 
-      Serial.println("Steering Speed = " + String(steeringSpeed));
-      
       // Set the steering motor speed
-      wheelLeft.setSpeed(abs(steeringSpeed)); // Use the absolute speed value
-
-      // Set the direction based on the steering speed (right or left)
-      if (steeringSpeed > 0) {
-        wheelLeft.run(FORWARD); // Right turn
-      } else if (steeringSpeed < 0) {
-        wheelLeft.run(BACKWARD); // Left turn
-      } else {
-        wheelLeft.run(RELEASE); // Stop the motor when speed is 0
+      steeringMotor.setSpeed(steeringSpeed);
+      Serial.println("steeringInput");
+      Serial.println(steeringInput);
+      // Turn Right
+      if (steeringInput > 0 && steeringInput < crawlSteerThreshold) {
+        steeringMotor.run(FORWARD);
+      }
+      // Right Crawl
+      else if (steeringInput > 0 && steeringInput > crawlSteerThreshold) {
+        Serial.println("Super steer right");
+      } 
+      // Turn Left
+      else if (steeringInput < 0 && steeringInput > negativeCrawlSteerThreshold) {
+        steeringMotor.run(BACKWARD);
+      }
+      // Left Crawl
+      else if (steeringInput < 0 && steeringInput < negativeCrawlSteerThreshold) {
+        Serial.println("Super steer left");
+      } 
+      // Stop the motor
+      else if (steeringInput == 0){
+        steeringMotor.run(RELEASE); 
       }
     }
 
@@ -99,8 +110,8 @@ void loop()
       motorSpeed = data.substring(1).toInt();
       Serial.println("Motor Speed = " + String(motorSpeed));
       // Stop the robot to reset the speed
-      wheelLeft.run(RELEASE);
-      wheelRight.run(RELEASE);
+      rearLeftMotor.run(RELEASE);
+      rearRightMotor.run(RELEASE);
     }
 
     // Movement Instructions
@@ -112,24 +123,24 @@ void loop()
       switch (movementInstruction) {
         case 1:
           // Forward
-          wheelLeft.run(FORWARD);
-          wheelRight.run(FORWARD);
-          wheelLeft.setSpeed(motorSpeed);
-          wheelRight.setSpeed(motorSpeed);
+          rearLeftMotor.run(FORWARD);
+          rearRightMotor.run(FORWARD);
+          rearLeftMotor.setSpeed(motorSpeed);
+          rearRightMotor.setSpeed(motorSpeed);
           // Add your code to move forward here
           break;
         case 2:
           // Backward
-	        wheelLeft.run(BACKWARD);
-          wheelRight.run(BACKWARD);
-          wheelLeft.setSpeed(motorSpeed);  
-          wheelRight.setSpeed(motorSpeed);
+	        rearLeftMotor.run(BACKWARD);
+          rearRightMotor.run(BACKWARD);
+          rearLeftMotor.setSpeed(motorSpeed);  
+          rearRightMotor.setSpeed(motorSpeed);
           // Add your code to move backward here
           break;
         case 9:
           // Stop
-          wheelLeft.run(RELEASE);
-          wheelRight.run(RELEASE);
+          rearLeftMotor.run(RELEASE);
+          rearRightMotor.run(RELEASE);
           break;
         default:
           Serial.println("Invalid Movement Instruction");
