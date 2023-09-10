@@ -39,19 +39,19 @@ AF_DCMotor rearLeftMotor(1);
 AF_DCMotor rearRightMotor(2); 
 AF_DCMotor steeringMotor(1);
 
-int steeringSpeed = 150;
+int steeringSpeed = 255;
 int motorSpeed = 255;
 int crawlSteerThreshold = 230;
 int negativeCrawlSteerThreshold = -230;
 
+unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
+unsigned long motorRunDuration = 150;  // Threshold for steering
+bool motorReleased = true;  // Flag to track whether the motor has been released
 
 void setup()
 {
   // Start the Arduino hardware serial port at 9600 baud
   Serial.begin(115200);                                            // Serial 0 is for communication with the computer
-
-  // Motor
-  //AppMotor.DeviceDriverSet_Motor_Init();
 
   // Start the software serial port at the GPS's default baud (18, 19)
   Serial1.begin(9600);  // GPS
@@ -66,6 +66,13 @@ void setup()
 
 void loop()
 {
+  // Check if it's time to stop the motor
+  if (!motorReleased && (millis() - motorStartTime >= motorRunDuration)) {
+    Serial.println("Release");
+    steeringMotor.run(RELEASE);  // Stop the motor
+    motorReleased = true;  // Set the motorReleased flag to true
+  }
+
   while (Serial2.available() > 0){
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
@@ -74,37 +81,27 @@ void loop()
     if (data.startsWith("C")) {
       int servoInput = data.substring(1).toInt();
 
-      int steeringDifference = servoInput - 165;
-
-      // Map the difference to the steering motor's speed
-      int steeringInput = map(steeringDifference, -165, 165, -255, 255);
-
-      // Set the steering motor speed
-      steeringMotor.setSpeed(steeringSpeed);
-      Serial.println("steeringInput");
-      Serial.println(steeringInput);
-      // Turn Right
-      if (steeringInput > 0 && steeringInput < crawlSteerThreshold) {
-        steeringMotor.run(FORWARD);
-      }
-      // Right Crawl
-      else if (steeringInput > 0 && steeringInput > crawlSteerThreshold) {
-        Serial.println("Super steer right");
-      } 
-      // Turn Left
-      else if (steeringInput < 0 && steeringInput > negativeCrawlSteerThreshold) {
-        steeringMotor.run(BACKWARD);
-      }
-      // Left Crawl
-      else if (steeringInput < 0 && steeringInput < negativeCrawlSteerThreshold) {
-        Serial.println("Super steer left");
-      } 
-      // Stop the motor
-      else if (steeringInput == 0){
-        steeringMotor.run(RELEASE); 
+      switch (servoInput) {
+        case 3:
+          // Left
+          steeringMotor.run(FORWARD);
+          steeringMotor.setSpeed(motorSpeed);
+          motorStartTime = millis();
+          motorReleased = false;
+          break;
+        case 4:
+          // Right
+	        steeringMotor.run(BACKWARD);
+          steeringMotor.setSpeed(motorSpeed);  
+          motorStartTime = millis();
+          motorReleased = false;
+          break;
+        default:
+          Serial.println("Invalid Movement Instruction");
+          break;
       }
     }
-
+    
     // Motor speed adjustment
     if(data.startsWith("S")){
       motorSpeed = data.substring(1).toInt();
