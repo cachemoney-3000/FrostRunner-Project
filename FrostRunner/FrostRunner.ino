@@ -41,12 +41,12 @@ AF_DCMotor steeringMotor(1);
 
 int steeringSpeed = 255;
 int motorSpeed = 255;
-int crawlSteerThreshold = 230;
-int negativeCrawlSteerThreshold = -230;
 
 unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
-unsigned long motorRunDuration = 150;  // Threshold for steering
-bool motorReleased = true;  // Flag to track whether the motor has been released
+unsigned long steeringRunDuration = 150;  // Threshold for steering
+bool steeringReleased = true;  // Flag to track whether the motor has been released
+int steeringLocation = 0;  // Variable to track the steering location
+
 
 void setup()
 {
@@ -67,10 +67,10 @@ void setup()
 void loop()
 {
   // Check if it's time to stop the motor
-  if (!motorReleased && (millis() - motorStartTime >= motorRunDuration)) {
+  if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
     Serial.println("Release");
     steeringMotor.run(RELEASE);  // Stop the motor
-    motorReleased = true;  // Set the motorReleased flag to true
+    steeringReleased = true;  // Set the steeringReleased flag to true
   }
 
   while (Serial2.available() > 0){
@@ -84,17 +84,14 @@ void loop()
       switch (servoInput) {
         case 3:
           // Left
-          steeringMotor.run(FORWARD);
-          steeringMotor.setSpeed(motorSpeed);
-          motorStartTime = millis();
-          motorReleased = false;
+          if (steeringLocation > -2) {
+            steerLeft(false);
+          }
           break;
         case 4:
-          // Right
-	        steeringMotor.run(BACKWARD);
-          steeringMotor.setSpeed(motorSpeed);  
-          motorStartTime = millis();
-          motorReleased = false;
+          if (steeringLocation < 2) {
+            steerRight(false);
+          }
           break;
         default:
           Serial.println("Invalid Movement Instruction");
@@ -120,24 +117,15 @@ void loop()
       switch (movementInstruction) {
         case 1:
           // Forward
-          rearLeftMotor.run(FORWARD);
-          rearRightMotor.run(FORWARD);
-          rearLeftMotor.setSpeed(motorSpeed);
-          rearRightMotor.setSpeed(motorSpeed);
-          // Add your code to move forward here
+          forward();
           break;
         case 2:
-          // Backward
-	        rearLeftMotor.run(BACKWARD);
-          rearRightMotor.run(BACKWARD);
-          rearLeftMotor.setSpeed(motorSpeed);  
-          rearRightMotor.setSpeed(motorSpeed);
-          // Add your code to move backward here
+          // Reverse
+          reverse();
           break;
         case 9:
           // Stop
-          rearLeftMotor.run(RELEASE);
-          rearRightMotor.run(RELEASE);
+          stop();
           break;
         default:
           Serial.println("Invalid Movement Instruction");
@@ -172,3 +160,82 @@ void loop()
   }
 }
 
+
+void steerLeft(boolean stop){
+  // Left
+  steeringLocation--;
+  steeringMotor.run(FORWARD);
+  steeringMotor.setSpeed(motorSpeed);
+  motorStartTime = millis();
+  steeringReleased = false;
+
+  if(stop){
+    Serial.print("steeringLocation before: ");
+    Serial.println(steeringLocation);
+    steeringRunDuration = (abs(steeringLocation) * 150) + 150;
+    Serial.println("steeringRunDuration");
+    Serial.println(steeringRunDuration);
+  }
+  else {
+    steeringRunDuration = 150;
+  }
+
+  Serial.println("SteerLocation");
+  Serial.println(steeringLocation);
+}
+
+void steerRight(boolean stop) {
+   // Right
+  steeringLocation++;
+  steeringMotor.run(BACKWARD);
+  steeringMotor.setSpeed(motorSpeed);  
+  motorStartTime = millis();
+  steeringReleased = false;
+
+  if(stop){
+    Serial.print("steeringLocation before: ");
+    Serial.println(steeringLocation);
+    steeringRunDuration = (abs(steeringLocation) * 150) + 150;
+    Serial.println("steeringRunDuration");
+    Serial.println(steeringRunDuration);
+  }
+  else {
+    steeringRunDuration = 150;
+  }
+
+  Serial.println("SteerLocation");
+  Serial.println(steeringLocation);
+}
+
+void forward() {
+  // Forward
+  rearLeftMotor.run(FORWARD);
+  rearRightMotor.run(FORWARD);
+  rearLeftMotor.setSpeed(motorSpeed);
+  rearRightMotor.setSpeed(motorSpeed);
+}
+
+void reverse() {
+  // Backward
+  rearLeftMotor.run(BACKWARD);
+  rearRightMotor.run(BACKWARD);
+  rearLeftMotor.setSpeed(motorSpeed);  
+  rearRightMotor.setSpeed(motorSpeed);
+}
+
+void stop() {
+  rearLeftMotor.run(RELEASE);
+  rearRightMotor.run(RELEASE);
+  // Straighten the wheels
+  if (steeringLocation > 0) {
+    steerLeft(true);
+    steeringLocation = 0;
+  }
+  if (steeringLocation < 0) {
+    steerRight(true);
+    steeringLocation = 0;
+  }
+
+  Serial.println("SteerLocation");
+  Serial.println(steeringLocation);
+}
