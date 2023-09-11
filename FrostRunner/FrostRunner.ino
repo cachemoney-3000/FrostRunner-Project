@@ -36,14 +36,14 @@ QMC5883LCompass compass;
 
 // Motor
 AF_DCMotor rearLeftMotor(1);
-AF_DCMotor rearRightMotor(2); 
-AF_DCMotor steeringMotor(1);
+AF_DCMotor rearRightMotor(3); 
+AF_DCMotor steeringMotor(2);
 
 int steeringSpeed = 255;
 int motorSpeed = 255;
 
 unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
-unsigned long steeringRunDuration = 150;  // Threshold for steering
+unsigned long steeringRunDuration = 180;  // Threshold for steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
 
@@ -89,6 +89,7 @@ void loop()
           }
           break;
         case 4:
+          // Right
           if (steeringLocation < 2) {
             steerRight(false);
           }
@@ -101,6 +102,7 @@ void loop()
     
     // Motor speed adjustment
     if(data.startsWith("S")){
+      // Set the new motor speed
       motorSpeed = data.substring(1).toInt();
       Serial.println("Motor Speed = " + String(motorSpeed));
       // Stop the robot to reset the speed
