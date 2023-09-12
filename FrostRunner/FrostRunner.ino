@@ -33,19 +33,10 @@ float targetLongitude = 0; // = -81.46820800;
 QMC5883LCompass compass;
 
 // Motor
-AF_DCMotor rearLeftMotor(1);
-AF_DCMotor rearRightMotor(3); 
-AF_DCMotor steeringMotor(2);
-
 int steeringSpeed = 255;
-int motorSpeed = 255;
 int motorSpeed = 150;
 
 unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
-unsigned long steeringRunDuration = 180;  // Threshold for steering
-bool steeringReleased = true;  // Flag to track whether the motor has been released
-int steeringLocation = 0;  // Variable to track the steering location
-
 unsigned long steeringRunDuration = 180;  // Threshold for steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
@@ -94,10 +85,7 @@ void loop()
 {
   // Check if it's time to stop the motor
   if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
-  if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
     Serial.println("Release");
-    steeringMotor.run(RELEASE);  // Stop the motor
-    steeringReleased = true;  // Set the steeringReleased flag to true
     steeringRelease();  // Stop the motor
     steeringReleased = true;  // Set the steeringReleased flag to true
   }
@@ -116,15 +104,9 @@ void loop()
           if (steeringLocation > -2) {
             steerLeft(false);
           }
-          if (steeringLocation > -2) {
-            steerLeft(false);
-          }
           break;
         case 4:
           // Right
-          if (steeringLocation < 2) {
-            steerRight(false);
-          }
           if (steeringLocation < 2) {
             steerRight(false);
           }
@@ -137,7 +119,6 @@ void loop()
     
     // Motor speed adjustment
     if(data.startsWith("S")){
-      // Set the new motor speed
       // Set the new motor speed
       motorSpeed = data.substring(1).toInt();
       Serial.println("Motor Speed = " + String(motorSpeed));
