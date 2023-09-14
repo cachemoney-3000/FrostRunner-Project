@@ -37,7 +37,7 @@ int steeringSpeed = 255;
 int motorSpeed = 150;
 
 unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
-unsigned long steeringRunDuration = 180;  // Threshold for steering
+unsigned long steeringRunDuration = 200;  // Threshold for steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
 
@@ -245,12 +245,12 @@ void steerLeft(boolean stop){
   if(stop){
     Serial.print("steeringLocation before: ");
     Serial.println(steeringLocation);
-    steeringRunDuration = 120;
+    steeringRunDuration = 130;
     Serial.println("steeringRunDuration");
     Serial.println(steeringRunDuration);
   }
   else {
-    steeringRunDuration = 180;
+    steeringRunDuration = 200;
   }
 
   Serial.println("SteerLocation");
@@ -276,7 +276,7 @@ void steerRight(boolean stop) {
     Serial.println(steeringRunDuration);
   }
   else {
-    steeringRunDuration = 180;
+    steeringRunDuration = 200;
   }
 
   Serial.println("SteerLocation");
@@ -290,7 +290,7 @@ void forward(int speed) {
   // Forward
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
-  analogWrite(ENA, 100);
+  //analogWrite(ENA, 100);
 }
 
 void reverse(int speed) {
@@ -300,7 +300,7 @@ void reverse(int speed) {
   // Backward
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
-  analogWrite(ENA, 100);
+  //analogWrite(ENA, 100);
 }
 
 void stop() {
