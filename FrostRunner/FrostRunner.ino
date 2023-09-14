@@ -55,6 +55,11 @@ const int ENB = 9;
 bool motorDirectionForward = false;
 bool motorDirectionReverse = false;
 
+bool gradualSpeed = false;
+
+// Smooth Start
+unsigned long smoothStartTime = 0;
+
 void setup()
 {
   // Start the Arduino hardware serial port at 9600 baud
@@ -90,6 +95,42 @@ void loop()
     steeringReleased = true;  // Set the steeringReleased flag to true
   }
 
+  // Gradually adjust motor speed based on time intervals
+  if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
+    if (millis() - smoothStartTime < 500) {
+      Serial.println("1");
+      analogWrite(ENA, 100);
+    } 
+    else if (millis() - smoothStartTime < 800) {
+      Serial.println("2");
+      analogWrite(ENA, 125);
+    } 
+    else if (millis() - smoothStartTime < 1100) {
+      Serial.println("3");
+      analogWrite(ENA, 150);
+
+      if (motorSpeed == 150) {
+        gradualSpeed = true;
+      }
+    } 
+    // Motor speed is 255
+    if (millis() - smoothStartTime > 1100 && motorSpeed == 255){
+      if (millis() - smoothStartTime < 1100) {
+        Serial.println("4");
+        analogWrite(ENA, 180);
+      }
+      else if (millis() - smoothStartTime < 1400) {
+        Serial.println("5");
+        analogWrite(ENA, 225);
+      }
+      else {
+        Serial.println("6");
+        analogWrite(ENA, motorSpeed);
+        gradualSpeed = true;
+      }
+    }
+  }
+
   while (Serial2.available() > 0){
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
@@ -101,13 +142,13 @@ void loop()
       switch (servoInput) {
         case 3:
           // Left
-          if (steeringLocation > -2) {
+          if (steeringLocation > -1) {
             steerLeft(false);
           }
           break;
         case 4:
           // Right
-          if (steeringLocation < 2) {
+          if (steeringLocation < 1) {
             steerRight(false);
           }
           break;
@@ -123,6 +164,8 @@ void loop()
       motorSpeed = data.substring(1).toInt();
       Serial.println("Motor Speed = " + String(motorSpeed));
       // Stop the robot to reset the speed
+      motorDirectionForward = false;
+      motorDirectionReverse = false;
       stop();
     }
 
@@ -202,7 +245,7 @@ void steerLeft(boolean stop){
   if(stop){
     Serial.print("steeringLocation before: ");
     Serial.println(steeringLocation);
-    steeringRunDuration = (abs(steeringLocation) * 180);
+    steeringRunDuration = 120;
     Serial.println("steeringRunDuration");
     Serial.println(steeringRunDuration);
   }
@@ -228,7 +271,7 @@ void steerRight(boolean stop) {
   if(stop){
     Serial.print("steeringLocation before: ");
     Serial.println(steeringLocation);
-    steeringRunDuration = (abs(steeringLocation) * 180) + 180;
+    steeringRunDuration = 180;
     Serial.println("steeringRunDuration");
     Serial.println(steeringRunDuration);
   }
@@ -241,21 +284,27 @@ void steerRight(boolean stop) {
 }
 
 void forward(int speed) {
+  // Start time
+  smoothStartTime = millis();
+  gradualSpeed = false;
   // Forward
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
-  analogWrite(ENA, speed);
+  analogWrite(ENA, 100);
 }
 
 void reverse(int speed) {
+  // Start time
+  smoothStartTime = millis();
+  gradualSpeed = false;
   // Backward
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
-  analogWrite(ENA, speed);
-
+  analogWrite(ENA, 100);
 }
 
 void stop() {
+  gradualSpeed = false;
   digitalWrite(IN1,LOW);
   digitalWrite(IN2,LOW);
   // Straighten the wheels
@@ -267,6 +316,7 @@ void stop() {
     steerRight(true);
     steeringLocation = 0;
   }
+
 
   Serial.println("SteerLocation");
   Serial.println(steeringLocation);
