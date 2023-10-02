@@ -29,7 +29,7 @@ int steeringSpeed = 255;
 int motorSpeed = 150;
 
 unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
-unsigned long steeringRunDuration = 180;  // Threshold for steering
+unsigned long steeringRunDuration = 200;  // Threshold for steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
 
