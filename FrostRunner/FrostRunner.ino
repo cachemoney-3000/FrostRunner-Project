@@ -14,20 +14,12 @@ int GPS_Course;       // variable to hold the gps's determined course to destina
 int Number_of_SATS;   // variable to hold the number of satellites acquired
 TinyGPSPlus gps;      // gps = instance of TinyGPS
 
-
-Waypoint waypoint;
-int frontIndex = 0;
-int rearIndex = -1;
-int waypointCounter = 0;
-
-int bluetoothReadFlag = 0;
-
-int movementInstruction = 0;
-
+bool arrived = false;
 //******************************************************************************************************     
 String location="";
 float targetLatitude = 0; // = 28.59108000;
 float targetLongitude = 0; // = -81.46820800;
+int movementInstruction = 0;
 //******************************************************************************************************
 // Compass Variables & Setup
 QMC5883LCompass compass;
@@ -72,7 +64,7 @@ void setup()
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
-  //Startup();  // Startup procedure
+  Startup();  // Startup procedure
 
   // Rear Motors
   pinMode(IN1, OUTPUT);
@@ -97,15 +89,15 @@ void loop()
 
   // Gradually adjust motor speed based on time intervals
   if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
-    if (millis() - smoothStartTime < 500) {
+    if (millis() - smoothStartTime < 1000) {
       Serial.println("1");
       analogWrite(ENA, 100);
     } 
-    else if (millis() - smoothStartTime < 800) {
+    else if (millis() - smoothStartTime < 1500) {
       Serial.println("2");
       analogWrite(ENA, 125);
     } 
-    else if (millis() - smoothStartTime < 1100) {
+    else if (millis() - smoothStartTime < 2000) {
       Serial.println("3");
       analogWrite(ENA, 150);
 
@@ -114,12 +106,12 @@ void loop()
       }
     } 
     // Motor speed is 255
-    if (millis() - smoothStartTime > 1100 && motorSpeed == 255){
-      if (millis() - smoothStartTime < 1100) {
+    if (millis() - smoothStartTime > 2000 && motorSpeed == 255){
+      if (millis() - smoothStartTime < 2500) {
         Serial.println("4");
         analogWrite(ENA, 180);
       }
-      else if (millis() - smoothStartTime < 1400) {
+      else if (millis() - smoothStartTime < 3000) {
         Serial.println("5");
         analogWrite(ENA, 225);
       }
@@ -202,6 +194,7 @@ void loop()
           break;
       }
     }
+   
     // Summon Instructions, Get the GPS coordinate from user's phone
     else {
       int separatorIndex = data.indexOf('/');
@@ -214,7 +207,8 @@ void loop()
         float newTargetLatitude = latitudeStr.toDouble();
         float newTargetLongitude = longitudeStr.toDouble();
 
-        if (newTargetLatitude != targetLatitude || newTargetLongitude != targetLongitude) {
+        // Only re-run this part of code if we have new longitude and latitude values
+        /* if (newTargetLatitude != targetLatitude || newTargetLongitude != targetLongitude) {
           targetLatitude = newTargetLatitude;
           targetLongitude = newTargetLongitude;
 
@@ -224,105 +218,22 @@ void loop()
 
           Serial.println("Target Longitude: " + String(targetLongitude, 8));
           Serial.println("Target Latitude: " + String(targetLatitude, 8));
-        }
+
+          driveTo(phoneLoc, 25);
+        } */
+
+        targetLatitude = newTargetLatitude;
+          targetLongitude = newTargetLongitude;
+
+          Location phoneLoc;
+          phoneLoc.latitude = targetLatitude;
+          phoneLoc.longitude = targetLongitude;
+
+          Serial.println("Target Longitude: " + String(targetLongitude, 8));
+          Serial.println("Target Latitude: " + String(targetLatitude, 8));
+
+          driveTo(phoneLoc, 25);
       }
     }
   }
-}
-
-
-void steerLeft(boolean stop){
-  // Left
-  steeringLocation--;
-
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-  analogWrite(ENB, steeringSpeed);
-
-  motorStartTime = millis();
-  steeringReleased = false;
-
-  if(stop){
-    Serial.print("steeringLocation before: ");
-    Serial.println(steeringLocation);
-    steeringRunDuration = 120;
-    Serial.println("steeringRunDuration");
-    Serial.println(steeringRunDuration);
-  }
-  else {
-    steeringRunDuration = 180;
-  }
-
-  Serial.println("SteerLocation");
-  Serial.println(steeringLocation);
-}
-
-void steerRight(boolean stop) {
-   // Right
-  steeringLocation++;
-  
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH);
-  analogWrite(ENB, steeringSpeed);
-
-  motorStartTime = millis();
-  steeringReleased = false;
-
-  if(stop){
-    Serial.print("steeringLocation before: ");
-    Serial.println(steeringLocation);
-    steeringRunDuration = 180;
-    Serial.println("steeringRunDuration");
-    Serial.println(steeringRunDuration);
-  }
-  else {
-    steeringRunDuration = 180;
-  }
-
-  Serial.println("SteerLocation");
-  Serial.println(steeringLocation);
-}
-
-void forward(int speed) {
-  // Start time
-  smoothStartTime = millis();
-  gradualSpeed = false;
-  // Forward
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  analogWrite(ENA, 100);
-}
-
-void reverse(int speed) {
-  // Start time
-  smoothStartTime = millis();
-  gradualSpeed = false;
-  // Backward
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  analogWrite(ENA, 100);
-}
-
-void stop() {
-  gradualSpeed = false;
-  digitalWrite(IN1,LOW);
-  digitalWrite(IN2,LOW);
-  // Straighten the wheels
-  if (steeringLocation > 0) {
-    steerLeft(true);
-    steeringLocation = 0;
-  }
-  if (steeringLocation < 0) {
-    steerRight(true);
-    steeringLocation = 0;
-  }
-
-
-  Serial.println("SteerLocation");
-  Serial.println(steeringLocation);
-}
-
-void steeringRelease() {
-  digitalWrite(IN3,LOW);
-  digitalWrite(IN4,LOW);
 }

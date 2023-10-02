@@ -14,9 +14,6 @@ void Startup()
 }    
 
 
-
-
-
 void displayInfo()
 {
   //gps.location.isValid()
