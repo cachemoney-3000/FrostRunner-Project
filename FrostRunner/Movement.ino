@@ -51,7 +51,7 @@ void steerRight(boolean stop) {
   Serial.println(steeringLocation);
 }
 
-void forward(int speed) {
+void forward() {
   // Start time
   smoothStartTime = millis();
   gradualSpeed = false;
@@ -61,7 +61,7 @@ void forward(int speed) {
   analogWrite(ENA, 100);
 }
 
-void reverse(int speed) {
+void reverse() {
   // Start time
   smoothStartTime = millis();
   gradualSpeed = false;

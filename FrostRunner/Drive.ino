@@ -26,7 +26,7 @@ void driveTo(struct Location &phoneLoc, int timeout) {
         Serial.println(heading);
         
         // TODO drive -> Motor controls
-        //drive(distance, bearing);
+        drive(distance, bearing);
         //Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
 
         timeout -= 1;
@@ -34,8 +34,52 @@ void driveTo(struct Location &phoneLoc, int timeout) {
 
     // TODO stop
     Serial.println("stop");
-    // stop();
+    stop();
   }
+}
+
+void drive(float distance, float bearing) {
+    float bearingTolerance = 10.0;   // Define a tolerance of 10 degrees for heading
+    float distanceTolerance = 2.0;  // Define a tolerance of 2 meters for distance
+
+    // Ensure the heading difference is within the range of -180 to 180 degrees
+    if (bearing > 180.0) {
+        bearing -= 360.0;
+    } else if (bearing < -180.0) {
+        bearing += 360.0;
+    }
+
+    // Turning the vehicle
+    if (fabs(bearing) > bearingTolerance) {
+        if (bearing > 0) {
+            Serial.println("Right");
+            // Turn right (clockwise)
+            steerRight(false);
+        } 
+        else {
+            Serial.println("Left");
+            // Turn left (counterclockwise)
+            steerLeft(false);
+        }
+    } 
+    else {
+        Serial.println("Straighten Wheel");
+        straightenWheel(); 
+    }
+
+    // Move forward or backward based on distance
+    if (distance > distanceTolerance) {
+        Serial.println("Forward");
+        forward();  // Adjust the speed as needed
+    } 
+    else if (distance < -distanceTolerance) {
+        Serial.println("Reverse");
+        reverse();  // Adjust the speed as needed
+    } 
+    else {
+        Serial.println("Stop");
+        stop();
+    }
 }
 
 float geoDistance(struct Location &robotLoc, struct Location &phoneLoc){

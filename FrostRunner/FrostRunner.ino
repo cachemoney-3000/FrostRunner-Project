@@ -170,7 +170,7 @@ void loop()
         case 1:
           // Forward
           if (!motorDirectionForward) {
-            forward(motorSpeed);
+            forward();
             motorDirectionForward = true;
             motorDirectionReverse = false;
           }
@@ -178,7 +178,7 @@ void loop()
         case 2:
           // Reverse
           if (!motorDirectionReverse) {
-            reverse(motorSpeed);
+            reverse();
             motorDirectionReverse = true;
             motorDirectionForward = false;
           }
@@ -223,16 +223,16 @@ void loop()
         } */
 
         targetLatitude = newTargetLatitude;
-          targetLongitude = newTargetLongitude;
+        targetLongitude = newTargetLongitude;
 
-          Location phoneLoc;
-          phoneLoc.latitude = targetLatitude;
-          phoneLoc.longitude = targetLongitude;
+        Location phoneLoc;
+        phoneLoc.latitude = targetLatitude;
+        phoneLoc.longitude = targetLongitude;
 
-          Serial.println("Target Longitude: " + String(targetLongitude, 8));
-          Serial.println("Target Latitude: " + String(targetLatitude, 8));
+        Serial.println("Target Longitude: " + String(targetLongitude, 8));
+        Serial.println("Target Latitude: " + String(targetLatitude, 8));
 
-          driveTo(phoneLoc, 25);
+        driveTo(phoneLoc, 25);
       }
     }
   }
