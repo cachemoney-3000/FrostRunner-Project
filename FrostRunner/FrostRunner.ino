@@ -7,7 +7,22 @@
 #include "./Definitions.h"
 
 #include <Servo.h>
+//******************************************************************************************************   
+// Ultrasonic Sensons, Collision Avoidance
+// Front Right
+const int trigPin_fr = 7;
+const int echoPin_fr = 6;
+// Front Left
+const int trigPin_fl = 5;
+const int echoPin_fl = 4;
+// Back
+const int trigPin_b = 3;
+const int echoPin_b = 2;
 
+const int numSensors = 3; // Number of sensors
+int trigPin[numSensors];  // Array of trigger pins
+int echoPin[numSensors];  // Array of echo pins
+const float collisionThreshold = 10.0; // 20 centimeters
 //******************************************************************************************************                                                                  
 // GPS Variables & Setup
 int GPS_Course;       // variable to hold the gps's determined course to destination
@@ -44,8 +59,8 @@ const int IN4 = 7;
 const int ENB = 9;
 
 // Define flag variable for motor direction
-bool motorDirectionForward = false;
-bool motorDirectionReverse = false;
+bool motorDirectionForward = true;
+bool motorDirectionReverse = true;
 
 bool gradualSpeed = false;
 
@@ -64,7 +79,7 @@ void setup()
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
-  Startup();  // Startup procedure
+  //Startup();  // Startup procedure
 
   // Rear Motors
   pinMode(IN1, OUTPUT);
@@ -75,9 +90,28 @@ void setup()
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
   pinMode(ENB, OUTPUT);
+
+  // Ultrasonic Sensors:
+  pinMode(trigPin_fr, OUTPUT);
+  pinMode(echoPin_fr, INPUT);
+
+  pinMode(trigPin_fl, OUTPUT);
+  pinMode(echoPin_fl, INPUT);
+
+  pinMode(trigPin_b, OUTPUT);
+  pinMode(echoPin_b, INPUT);
+
+  // Initialize trigger and echo pins for each sensor
+  trigPin[0] = trigPin_fr;
+  trigPin[1] = trigPin_fl;
+  trigPin[2] = trigPin_b;
+  echoPin[0] = echoPin_fr;
+  echoPin[1] = echoPin_fl;
+  echoPin[2] = echoPin_b;
+
 }
 
-
+long duration, cm, inches;
 void loop()
 {
   // Check if it's time to stop the motor
@@ -120,6 +154,44 @@ void loop()
         analogWrite(ENA, motorSpeed);
         gradualSpeed = true;
       }
+    }
+  }
+
+  // When we are in reverse, read the back sensor
+  if (motorDirectionReverse) {
+    // Read the back sensor
+    float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
+    Serial.print("Back Sensor: ");
+    Serial.print(distance);
+    Serial.println(" cm");
+
+    // Check if the back sensor reading is below the collision threshold
+    if (distance < collisionThreshold) {
+      // Call the stop function immediately
+      stop();
+    }
+  } 
+  // Forward
+  else if (motorDirectionForward) {
+    bool obstacleDetected = false;
+    // Read the front sensors
+    for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
+      float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
+      Serial.print("Front Sensor ");
+      Serial.print(i + 1);
+      Serial.print(": ");
+      Serial.print(distance);
+      Serial.println(" cm");
+
+      if (distance < collisionThreshold) {
+        obstacleDetected = true;
+        break; // Exit the loop early if an obstacle is detected
+      }
+    }
+
+     // If an obstacle is detected by any front sensor, call the stop function
+    if (obstacleDetected) {
+      stop();
     }
   }
 
@@ -236,4 +308,19 @@ void loop()
       }
     }
   }
+}
+
+float readUltrasonicSensor(int trigPin, int echoPin) {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(5);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  pinMode(echoPin, INPUT);
+  unsigned long duration = pulseIn(echoPin, HIGH);
+
+  // Convert the time into a distance
+  float cm = (duration / 2) / 29.1; // Divide by 29.1 or multiply by 0.0343
+  return cm;
 }

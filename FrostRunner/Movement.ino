@@ -59,6 +59,9 @@ void forward() {
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
   analogWrite(ENA, 100);
+
+  motorDirectionForward = true;
+  motorDirectionReverse = false;
 }
 
 void reverse() {
@@ -69,6 +72,9 @@ void reverse() {
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
   analogWrite(ENA, 100);
+
+  motorDirectionReverse = true;
+  motorDirectionForward = false;
 }
 
 void straightenWheel() {
@@ -90,8 +96,10 @@ void stop() {
   
   straightenWheel();
 
-  Serial.println("SteerLocation");
-  Serial.println(steeringLocation);
+  Serial.println("Stop");
+
+  motorDirectionForward = false;
+  motorDirectionReverse = false;
 }
 
 void steeringRelease() {
