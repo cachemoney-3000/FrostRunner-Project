@@ -1,12 +1,4 @@
-// Pin variables
-#define GPS_TX_PIN 6
-#define GPS_RX_PIN 3
-
-#define PIN_SPEED_RIGHT 9
-#define PIN_SPEED_LEFT 5
-
-#define BLUETOOTH_TX_PIN 10
-#define BLUETOOTH_RX_PIN 11
+#define SERVO_PIN 10
 
 // Bluetooth GPS input
 #define SOP '<'
