@@ -1,18 +1,3 @@
-#define SERVO_PIN 10
-
-// Bluetooth GPS input
-#define SOP '<'
-#define EOP '>'
-
-// Motor stuffs
-#define RC_NEUTRAL 1500
-#define RC_MAX 1600
-#define RC_MIN 1400
-
-// If one motor tends to spin faster than the other, add offset
-#define MOTOR_A_OFFSET 0
-#define MOTOR_B_OFFSET 0
-
 // You must then add your 'Declination Angle' to the compass, which is the 'Error' of the magnetic field in your location.
 // Find yours here: http://www.magnetic-declination.com/
 // Mine is: 13° 24' E (Positive), which is ~13 Degrees, or (which we need) 0.23 radians
@@ -30,20 +15,31 @@
 // Keeps the robot from driving away if there is a problem
 #define GPS_WAYPOINT_TIMEOUT 25
 
-
-#define MAX_WAYPOINTS 10
-
 // Struct to combine our coordinates into one struct for ease of use
 struct Location {
   float latitude;
   float longitude;
 };
 
-struct Waypoint {
-  float LatitudeArray[MAX_WAYPOINTS];
-  float LongitudeArray[MAX_WAYPOINTS];
-};
-
-
+// Conversion
 #define DEGTORAD 0.0174532925199432957f
 #define RADTODEG 57.295779513082320876f
+
+// Ultrasonic Sensors Pins
+#define TRIG_PIN_FRONT_RIGHT 7
+#define ECHO_PIN_FRONT_RIGHT 6
+#define TRIG_PIN_FRONT_LEFT 5
+#define ECHO_PIN_FRONT_LEFT 4
+#define TRIG_PIN_BACK 3
+#define ECHO_PIN_BACK 2
+
+#define NUM_ULTRASONIC_SENSORS 3
+#define COLLISION_THRESHOLD 10.0f // 10.0 cm, can be change
+
+// Motors Pins
+#define REAR_MOTOR_IN1 5
+#define REAR_MOTOR_IN2 4
+#define REAR_MOTOR_ENA 6
+#define STEERING_MOTOR_IN3 8
+#define STEERING_MOTOR_IN4 7
+#define STEERING_MOTOR_ENB 9
