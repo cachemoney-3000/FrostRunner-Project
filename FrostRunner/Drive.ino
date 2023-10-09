@@ -9,57 +9,60 @@ void driveTo(struct Location &phoneLoc, int timeout) {
         robotLoc = getGPS();
         Serial.println("Robot Longitude: " + String(robotLoc.longitude, 8));
         Serial.println("Robot Latitude: " + String(robotLoc.latitude, 8));
-
-        // TODO geoDistance
-        distance = geoDistance(robotLoc, phoneLoc);
-        // Get the heading angle in degrees
-        float heading = geoHeading();
-        float bearing = geoBearing(robotLoc, phoneLoc) - heading;
         
-        Serial.print("Distance: ");
-        Serial.println(distance);
+        if (robotLoc.latitude != 0 && robotLoc.longitude != 0){
+            // TODO geoDistance
+            distance = geoDistance(robotLoc, phoneLoc);
+            // Get the heading angle in degrees
+            float heading = geoHeading();
+            float bearing = geoBearing(robotLoc, phoneLoc) - heading;
+            
+            Serial.print("Distance: ");
+            Serial.println(distance);
 
-        Serial.print("Bearing: ");
-        Serial.println(bearing);
+            Serial.print("Bearing: ");
+            Serial.println(bearing);
 
-        Serial.print("Heading: ");
-        Serial.println(heading);
-        
-        // When we are in reverse, read the back sensor
-        if (motorDirectionReverse) {
-            // Read the back sensor
-            float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
-            // Check if the back sensor reading is below the collision threshold
-            if (distance < COLLISION_THRESHOLD) {
-                // Call the stop function immediately
-                stop();
-                break; // Exit the loop early if an obstacle is detected
-            }
-        } 
-        // Forward
-        else if (motorDirectionForward) {
-            bool obstacleDetected = false;
-            // Read the front sensors
-            for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
-                float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
+            Serial.print("Heading: ");
+            Serial.println(heading);
+            
+            // When we are in reverse, read the back sensor
+            if (motorDirectionReverse) {
+                // Read the back sensor
+                float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
+                // Check if the back sensor reading is below the collision threshold
                 if (distance < COLLISION_THRESHOLD) {
-                    obstacleDetected = true;
+                    // Call the stop function immediately
+                    stop();
                     break; // Exit the loop early if an obstacle is detected
-            }
-            }
+                }
+            } 
+            // Forward
+            else if (motorDirectionForward) {
+                bool obstacleDetected = false;
+                // Read the front sensors
+                for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
+                    float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
+                    if (distance < COLLISION_THRESHOLD) {
+                        obstacleDetected = true;
+                        break; // Exit the loop early if an obstacle is detected
+                }
+                }
 
-            // If an obstacle is detected by any front sensor, call the stop function
-            if (obstacleDetected) {
-                stop();
-                break; // Exit the loop early if an obstacle is detected
+                // If an obstacle is detected by any front sensor, call the stop function
+                if (obstacleDetected) {
+                    stop();
+                    break; // Exit the loop early if an obstacle is detected
+                }
             }
+            
+            // TODO drive -> Motor controls
+            drive(distance, bearing);
+            //Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
+
+            timeout -= 1;
         }
         
-        // TODO drive -> Motor controls
-        drive(distance, bearing);
-        //Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
-
-        timeout -= 1;
     } while (distance > 1.0 && timeout > 0);
 
     stop();
@@ -82,13 +85,17 @@ void drive(float distance, float bearing) {
         if (bearing > 0) {
             // Turn right (clockwise)
             if (steeringLocation < 1) {
+                Serial.println("Right");
                 steerRight(false);
+                straightenWheel(); 
             }
         } 
         else {
             // Turn left (counterclockwise)
             if (steeringLocation > -1) {
+                Serial.println("Left");
                 steerLeft(false);
+                straightenWheel(); 
             }
         }
     } 
@@ -99,11 +106,11 @@ void drive(float distance, float bearing) {
     // Move forward or backward based on distance
     if (distance > distanceTolerance) {
         Serial.println("Forward");
-        forward();  // Adjust the speed as needed
+        forward(SELF_DRIVING_FORWARD_SPEED);  // Adjust the speed as needed
     } 
     else if (distance < -distanceTolerance) {
         Serial.println("Reverse");
-        reverse();  // Adjust the speed as needed
+        reverse(SELF_DRIVING_REVERSE_SPEED - 50);  // Adjust the speed as needed
     } 
     else {
         Serial.println("Stop");

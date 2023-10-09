@@ -51,27 +51,27 @@ void steerRight(boolean stop) {
   Serial.println(steeringLocation);
 }
 
-void forward() {
+void forward(int speed) {
   // Start time
   smoothStartTime = millis();
   gradualSpeed = false;
   // Forward
   digitalWrite(REAR_MOTOR_IN1, HIGH);
   digitalWrite(REAR_MOTOR_IN2, LOW);
-  analogWrite(REAR_MOTOR_ENA, 100);
+  analogWrite(REAR_MOTOR_ENA, speed);
 
   motorDirectionForward = true;
   motorDirectionReverse = false;
 }
 
-void reverse() {
+void reverse(int speed) {
   // Start time
   smoothStartTime = millis();
   gradualSpeed = false;
   // Backward
   digitalWrite(REAR_MOTOR_IN1, LOW);
   digitalWrite(REAR_MOTOR_IN2, HIGH);
-  analogWrite(REAR_MOTOR_ENA, 100);
+  analogWrite(REAR_MOTOR_ENA, speed);
 
   motorDirectionReverse = true;
   motorDirectionForward = false;

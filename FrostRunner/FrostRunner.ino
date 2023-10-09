@@ -221,13 +221,13 @@ void loop()
         case 1:
           // Forward
           if (!motorDirectionForward) {
-            forward();
+            forward(motorSpeed);
           }
           break;
         case 2:
           // Reverse
           if (!motorDirectionReverse) {
-            reverse();
+            reverse(motorSpeed - 50);
           }
           break;
         case 9:
