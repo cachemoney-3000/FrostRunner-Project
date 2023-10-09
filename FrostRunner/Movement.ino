@@ -3,9 +3,9 @@ void steerLeft(boolean stop){
   // Left
   steeringLocation--;
 
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-  analogWrite(ENB, steeringSpeed);
+  digitalWrite(STEERING_MOTOR_IN3, HIGH);
+  digitalWrite(STEERING_MOTOR_IN4, LOW);
+  analogWrite(STEERING_MOTOR_ENB, steeringSpeed);
 
   motorStartTime = millis();
   steeringReleased = false;
@@ -29,9 +29,9 @@ void steerRight(boolean stop) {
    // Right
   steeringLocation++;
   
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH);
-  analogWrite(ENB, steeringSpeed);
+  digitalWrite(STEERING_MOTOR_IN3, LOW);
+  digitalWrite(STEERING_MOTOR_IN4, HIGH);
+  analogWrite(STEERING_MOTOR_ENB, steeringSpeed);
 
   motorStartTime = millis();
   steeringReleased = false;
@@ -56,9 +56,9 @@ void forward() {
   smoothStartTime = millis();
   gradualSpeed = false;
   // Forward
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  analogWrite(ENA, 100);
+  digitalWrite(REAR_MOTOR_IN1, HIGH);
+  digitalWrite(REAR_MOTOR_IN2, LOW);
+  analogWrite(REAR_MOTOR_ENA, 100);
 
   motorDirectionForward = true;
   motorDirectionReverse = false;
@@ -69,9 +69,9 @@ void reverse() {
   smoothStartTime = millis();
   gradualSpeed = false;
   // Backward
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  analogWrite(ENA, 100);
+  digitalWrite(REAR_MOTOR_IN1, LOW);
+  digitalWrite(REAR_MOTOR_IN2, HIGH);
+  analogWrite(REAR_MOTOR_ENA, 100);
 
   motorDirectionReverse = true;
   motorDirectionForward = false;
@@ -91,8 +91,8 @@ void straightenWheel() {
 
 void stop() {
   gradualSpeed = false;
-  digitalWrite(IN1,LOW);
-  digitalWrite(IN2,LOW);
+  digitalWrite(REAR_MOTOR_IN1,LOW);
+  digitalWrite(REAR_MOTOR_IN2,LOW);
   
   straightenWheel();
 
@@ -103,6 +103,6 @@ void stop() {
 }
 
 void steeringRelease() {
-  digitalWrite(IN3,LOW);
-  digitalWrite(IN4,LOW);
+  digitalWrite(STEERING_MOTOR_IN3,LOW);
+  digitalWrite(STEERING_MOTOR_IN4,LOW);
 }

@@ -25,6 +25,36 @@ void driveTo(struct Location &phoneLoc, int timeout) {
         Serial.print("Heading: ");
         Serial.println(heading);
         
+        // When we are in reverse, read the back sensor
+        if (motorDirectionReverse) {
+            // Read the back sensor
+            float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
+            // Check if the back sensor reading is below the collision threshold
+            if (distance < COLLISION_THRESHOLD) {
+                // Call the stop function immediately
+                stop();
+                break; // Exit the loop early if an obstacle is detected
+            }
+        } 
+        // Forward
+        else if (motorDirectionForward) {
+            bool obstacleDetected = false;
+            // Read the front sensors
+            for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
+                float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
+                if (distance < COLLISION_THRESHOLD) {
+                    obstacleDetected = true;
+                    break; // Exit the loop early if an obstacle is detected
+            }
+            }
+
+            // If an obstacle is detected by any front sensor, call the stop function
+            if (obstacleDetected) {
+                stop();
+                break; // Exit the loop early if an obstacle is detected
+            }
+        }
+        
         // TODO drive -> Motor controls
         drive(distance, bearing);
         //Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
@@ -32,8 +62,6 @@ void driveTo(struct Location &phoneLoc, int timeout) {
         timeout -= 1;
     } while (distance > 1.0 && timeout > 0);
 
-    // TODO stop
-    Serial.println("stop");
     stop();
   }
 }
@@ -52,18 +80,19 @@ void drive(float distance, float bearing) {
     // Turning the vehicle
     if (fabs(bearing) > bearingTolerance) {
         if (bearing > 0) {
-            Serial.println("Right");
             // Turn right (clockwise)
-            steerRight(false);
+            if (steeringLocation < 1) {
+                steerRight(false);
+            }
         } 
         else {
-            Serial.println("Left");
             // Turn left (counterclockwise)
-            steerLeft(false);
+            if (steeringLocation > -1) {
+                steerLeft(false);
+            }
         }
     } 
     else {
-        Serial.println("Straighten Wheel");
         straightenWheel(); 
     }
 

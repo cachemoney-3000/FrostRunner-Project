@@ -34,14 +34,17 @@ QMC5883LCompass compass;
 int steeringSpeed = 255;
 int motorSpeed = 150;
 
+unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
+unsigned long steeringRunDuration = 200;  // Threshold for steering
 
 // Define flag variable for motor direction
 bool motorDirectionForward = false;
 bool motorDirectionReverse = false;
 
 bool gradualSpeed = false;
+unsigned long smoothStartTime = 0;
 
 void setup()
 {
@@ -91,7 +94,7 @@ void setup()
 void loop()
 {
   // Check if it's time to stop the steering motor
-  if (!steeringReleased && (millis() >= STEERING_TIME_THRESHOLD)) {
+  if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
     Serial.println("Release");
     steeringRelease();  // Stop the motor
     steeringReleased = true;  // Set the steeringReleased flag to true
@@ -99,35 +102,35 @@ void loop()
 
   // Gradually adjust motor speed based on time intervals
   if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
-    if (millis() < 1000) {
+    if (millis() - smoothStartTime < 1000) {
       Serial.println("1");
-      analogWrite(ENA, 100);
+      analogWrite(REAR_MOTOR_ENA, 100);
     } 
-    else if (millis() < 1500) {
+    else if (millis() - smoothStartTime < 1500) {
       Serial.println("2");
-      analogWrite(ENA, 125);
+      analogWrite(REAR_MOTOR_ENA, 125);
     } 
-    else if (millis() < 2000) {
+    else if (millis() - smoothStartTime< 2000) {
       Serial.println("3");
-      analogWrite(ENA, 150);
+      analogWrite(REAR_MOTOR_ENA, 150);
 
       if (motorSpeed == 150) {
         gradualSpeed = true;
       }
     } 
     // Motor speed is 255
-    if (millis() > 2000 && motorSpeed == 255){
-      if (millis() < 2500) {
+    if (millis() - smoothStartTime > 2000 && motorSpeed == 255){
+      if (millis() - smoothStartTime < 2500) {
         Serial.println("4");
-        analogWrite(ENA, 180);
+        analogWrite(REAR_MOTOR_ENA, 180);
       }
-      else if (millis() < 3000) {
+      else if (millis() - smoothStartTime < 3000) {
         Serial.println("5");
-        analogWrite(ENA, 225);
+        analogWrite(REAR_MOTOR_ENA, 225);
       }
       else {
         Serial.println("6");
-        analogWrite(ENA, motorSpeed);
+        analogWrite(REAR_MOTOR_ENA, motorSpeed);
         gradualSpeed = true;
       }
     }

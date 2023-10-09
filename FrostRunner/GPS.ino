@@ -15,13 +15,10 @@ Location gpsdump() {
   robotLoc.latitude = gps.location.lat();
   robotLoc.longitude = gps.location.lng();
 
-  Serial.print(robotLoc.latitude, 7); Serial.print(", "); Serial.println(robotLoc.longitude, 7);
-
   return robotLoc;
 }
 
 Location getGPS() {
-  Serial.println("Reading onboard GPS: ");
   unsigned long start = millis();
   while (millis() - start < GPS_UPDATE_INTERVAL) {
     // If we recieved new location then take the coordinates and pack them into a struct
