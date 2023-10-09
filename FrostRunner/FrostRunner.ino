@@ -34,8 +34,6 @@ QMC5883LCompass compass;
 int steeringSpeed = 255;
 int motorSpeed = 150;
 
-unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
-unsigned long steeringRunDuration = 200;  // Threshold for steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
 
@@ -44,9 +42,6 @@ bool motorDirectionForward = false;
 bool motorDirectionReverse = false;
 
 bool gradualSpeed = false;
-
-// Smooth Start
-unsigned long smoothStartTime = 0;
 
 void setup()
 {
@@ -95,8 +90,8 @@ void setup()
 
 void loop()
 {
-  // Check if it's time to stop the motor
-  if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
+  // Check if it's time to stop the steering motor
+  if (!steeringReleased && (millis() >= STEERING_TIME_THRESHOLD)) {
     Serial.println("Release");
     steeringRelease();  // Stop the motor
     steeringReleased = true;  // Set the steeringReleased flag to true
@@ -104,15 +99,15 @@ void loop()
 
   // Gradually adjust motor speed based on time intervals
   if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
-    if (millis() - smoothStartTime < 1000) {
+    if (millis() < 1000) {
       Serial.println("1");
       analogWrite(ENA, 100);
     } 
-    else if (millis() - smoothStartTime < 1500) {
+    else if (millis() < 1500) {
       Serial.println("2");
       analogWrite(ENA, 125);
     } 
-    else if (millis() - smoothStartTime < 2000) {
+    else if (millis() < 2000) {
       Serial.println("3");
       analogWrite(ENA, 150);
 
@@ -121,12 +116,12 @@ void loop()
       }
     } 
     // Motor speed is 255
-    if (millis() - smoothStartTime > 2000 && motorSpeed == 255){
-      if (millis() - smoothStartTime < 2500) {
+    if (millis() > 2000 && motorSpeed == 255){
+      if (millis() < 2500) {
         Serial.println("4");
         analogWrite(ENA, 180);
       }
-      else if (millis() - smoothStartTime < 3000) {
+      else if (millis() < 3000) {
         Serial.println("5");
         analogWrite(ENA, 225);
       }

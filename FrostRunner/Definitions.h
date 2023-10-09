@@ -43,3 +43,5 @@ struct Location {
 #define STEERING_MOTOR_IN3 8
 #define STEERING_MOTOR_IN4 7
 #define STEERING_MOTOR_ENB 9
+
+#define STEERING_TIME_THRESHOLD 200 // Controls how long the motor will run when steering
