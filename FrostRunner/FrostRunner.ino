@@ -3,10 +3,16 @@
 
 #include <Wire.h>
 #include <QMC5883LCompass.h>
+#include <Servo.h>
+
+#include "DHT.h"
 
 #include "./Definitions.h"
 
-#include <Servo.h>
+//******************************************************************************************************   
+// Temperature
+DHT dht(DHTPIN, DHTTYPE);
+
 //******************************************************************************************************   
 // Ultrasonic Sensons, Collision Avoidance
 int trigPin[NUM_ULTRASONIC_SENSORS];  // Array of trigger pins
@@ -53,12 +59,12 @@ void setup()
 
   // Start the software serial port at the GPS's default baud (18, 19)
   Serial1.begin(9600);  // GPS
-  Serial2.begin(9600);  // Bluetooth
+  Serial2.begin(9600);  // Bluetooth, Communication with Phone 
   Serial.println("Mega up ");  // SERIAL PRINTS
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
-  Startup();  // Startup procedure
+  //Startup();  // Startup procedure
 
   // Rear Motors
   pinMode(REAR_MOTOR_IN1, OUTPUT);
@@ -88,19 +94,41 @@ void setup()
   echoPin[1] = ECHO_PIN_FRONT_LEFT;
   echoPin[2] = ECHO_PIN_BACK;
 
+  // Temperature
+  dht.begin();
 }
 
 
 void loop()
 {
-  // Check if it's time to stop the steering motor
+  /**
+   * Temperature
+  */
+  // Call the function to read temperature in Fahrenheit
+  float temperatureFahrenheit = readTemperatureFahrenheit();
+
+  // Print the temperature to the primary serial port (for debugging)
+  Serial.print(F("Temperature (Fahrenheit): "));
+  Serial.println(temperatureFahrenheit);
+
+  // Send the temperature data over Bluetooth using Serial2
+  Serial2.print(F("Temperature (Fahrenheit): "));
+  Serial2.println(temperatureFahrenheit);
+
+  /**
+   * Steering release
+   * Check if it's time to stop the steering motor
+  */
   if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
     Serial.println("Release");
     steeringRelease();  // Stop the motor
     steeringReleased = true;  // Set the steeringReleased flag to true
   }
 
-  // Gradually adjust motor speed based on time intervals
+  /**
+   * Gradual Speed logic
+   * 
+   */
   if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
     if (millis() - smoothStartTime < 1000) {
       Serial.println("1");
@@ -136,7 +164,10 @@ void loop()
     }
   }
 
-  // When we are in reverse, read the back sensor
+  /**
+   * Object avoidance logic
+   * 
+   */
   if (motorDirectionReverse) {
     // Read the back sensor
     float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
@@ -174,6 +205,10 @@ void loop()
     }
   }
 
+  /**
+   * Bluetooth communication, controls
+   * 
+   */
   while (Serial2.available() > 0){
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
@@ -283,17 +318,3 @@ void loop()
   }
 }
 
-float readUltrasonicSensor(int trigPin, int echoPin) {
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(5);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-
-  pinMode(echoPin, INPUT);
-  unsigned long ultrasonic_duration = pulseIn(echoPin, HIGH);
-
-  // Convert the time into a distance
-  float ultrasonic_cm = (ultrasonic_duration / 2) / 29.1; // Divide by 29.1 or multiply by 0.0343
-  return ultrasonic_cm;
-}
