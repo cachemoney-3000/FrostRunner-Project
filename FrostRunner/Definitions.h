@@ -37,13 +37,17 @@ struct Location {
 #define COLLISION_THRESHOLD 10.0f // 10.0 cm, can be change
 
 // Motors Pins
-#define REAR_MOTOR_IN1 5
-#define REAR_MOTOR_IN2 4
-#define REAR_MOTOR_ENA 6
-#define STEERING_MOTOR_IN3 8
-#define STEERING_MOTOR_IN4 7
-#define STEERING_MOTOR_ENB 9
+#define REAR_MOTOR_IN1 9
+#define REAR_MOTOR_IN2 8
+#define REAR_MOTOR_ENA 10
+#define STEERING_MOTOR_IN3 12
+#define STEERING_MOTOR_IN4 11
+#define STEERING_MOTOR_ENB 13
 
 #define STEERING_TIME_THRESHOLD 200 // Controls how long the motor will run when steering
 #define SELF_DRIVING_FORWARD_SPEED 100
 #define SELF_DRIVING_REVERSE_SPEED 50
+
+// Temperature Sensor Pins
+#define DHTPIN 50   // Digital pi
+#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321

@@ -3,10 +3,18 @@
 
 #include <Wire.h>
 #include <QMC5883LCompass.h>
+#include <Servo.h>
+
+#include "DHT.h"
 
 #include "./Definitions.h"
 
-#include <Servo.h>
+//******************************************************************************************************   
+// Temperature
+DHT dht(DHTPIN, DHTTYPE);
+
+unsigned long lastTemperatureTime = 0; // Variable to track the last temperature send time
+unsigned long temperatureInterval = 5000; // Interval for sending temperature data (5 seconds)
 //******************************************************************************************************   
 // Ultrasonic Sensons, Collision Avoidance
 int trigPin[NUM_ULTRASONIC_SENSORS];  // Array of trigger pins
@@ -34,17 +42,19 @@ QMC5883LCompass compass;
 int steeringSpeed = 255;
 int motorSpeed = 150;
 
-unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
+unsigned int motorStartTime = 0;  // Variable to store the time when the steering command was triggered
+
+// Steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
-unsigned long steeringRunDuration = 200;  // Threshold for steering
+unsigned int steeringRunDuration = 200;  // Threshold for steering
 
 // Define flag variable for motor direction
 bool motorDirectionForward = false;
 bool motorDirectionReverse = false;
 
 bool gradualSpeed = false;
-unsigned long smoothStartTime = 0;
+unsigned int smoothStartTime = 0;
 
 void setup()
 {
@@ -53,12 +63,12 @@ void setup()
 
   // Start the software serial port at the GPS's default baud (18, 19)
   Serial1.begin(9600);  // GPS
-  Serial2.begin(9600);  // Bluetooth
+  Serial2.begin(9600);  // Bluetooth, Communication with Phone 
   Serial.println("Mega up ");  // SERIAL PRINTS
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
-  Startup();  // Startup procedure
+  //Startup();  // Startup procedure
 
   // Rear Motors
   pinMode(REAR_MOTOR_IN1, OUTPUT);
@@ -88,19 +98,27 @@ void setup()
   echoPin[1] = ECHO_PIN_FRONT_LEFT;
   echoPin[2] = ECHO_PIN_BACK;
 
+  // Temperature
+  dht.begin();
 }
 
-
+String result = "";
 void loop()
 {
-  // Check if it's time to stop the steering motor
+  /**
+   * Steering release
+   * Check if it's time to stop the steering motor
+  */
   if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
     Serial.println("Release");
     steeringRelease();  // Stop the motor
     steeringReleased = true;  // Set the steeringReleased flag to true
   }
 
-  // Gradually adjust motor speed based on time intervals
+  /**
+   * Gradual Speed logic
+   * 
+   */
   if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
     if (millis() - smoothStartTime < 1000) {
       Serial.println("1");
@@ -136,7 +154,10 @@ void loop()
     }
   }
 
-  // When we are in reverse, read the back sensor
+  /**
+   * Object avoidance logic
+   * 
+   */
   if (motorDirectionReverse) {
     // Read the back sensor
     float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
@@ -174,6 +195,28 @@ void loop()
     }
   }
 
+  /**
+   * Temperature
+  */
+  // Check if it's time to send temperature data (every 5 secs)
+  if (millis() - lastTemperatureTime >= temperatureInterval) {
+    // Call the function to read temperature in Fahrenheit
+    float temperatureFahrenheit = readTemperatureFahrenheit();
+    int temperatureInteger = int(floor(temperatureFahrenheit));
+    // Print the temperature to the primary serial port (for debugging)
+    Serial.print(F("Temperature (Fahrenheit): "));
+    Serial.println(temperatureInteger);
+
+    Serial2.println(temperatureInteger);
+
+    // Update the last temperature send time
+    lastTemperatureTime = millis();
+  }
+  
+  /**
+   * Bluetooth communication, controls
+   * 
+   */
   while (Serial2.available() > 0){
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
@@ -207,6 +250,19 @@ void loop()
       motorSpeed = data.substring(1).toInt();
       Serial.println("Motor Speed = " + String(motorSpeed));
       // Stop the robot to reset the speed
+      motorDirectionForward = false;
+      motorDirectionReverse = false;
+      stop();
+    }
+
+    // Steering Threshold Adjustment
+    if(data.startsWith("T")){
+      // Set the new motor speed
+      steeringRunDuration += data.substring(1).toInt();
+      // Limit the range of steeringRunDuration to 50-250
+      steeringRunDuration = constrain(steeringRunDuration, 50, 250);
+      Serial.println("Steering Speed = " + String(steeringRunDuration));
+      // Stop the robot to reset the steering threshold
       motorDirectionForward = false;
       motorDirectionReverse = false;
       stop();
@@ -281,19 +337,7 @@ void loop()
       }
     }
   }
+
+  
 }
 
-float readUltrasonicSensor(int trigPin, int echoPin) {
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(5);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-
-  pinMode(echoPin, INPUT);
-  unsigned long ultrasonic_duration = pulseIn(echoPin, HIGH);
-
-  // Convert the time into a distance
-  float ultrasonic_cm = (ultrasonic_duration / 2) / 29.1; // Divide by 29.1 or multiply by 0.0343
-  return ultrasonic_cm;
-}
