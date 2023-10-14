@@ -13,6 +13,8 @@
 // Temperature
 DHT dht(DHTPIN, DHTTYPE);
 
+unsigned long lastTemperatureTime = 0; // Variable to track the last temperature send time
+unsigned long temperatureInterval = 5000; // Interval for sending temperature data (5 seconds)
 //******************************************************************************************************   
 // Ultrasonic Sensons, Collision Avoidance
 int trigPin[NUM_ULTRASONIC_SENSORS];  // Array of trigger pins
@@ -40,17 +42,19 @@ QMC5883LCompass compass;
 int steeringSpeed = 255;
 int motorSpeed = 150;
 
-unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
+unsigned int motorStartTime = 0;  // Variable to store the time when the steering command was triggered
+
+// Steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
-unsigned long steeringRunDuration = 200;  // Threshold for steering
+unsigned int steeringRunDuration = 200;  // Threshold for steering
 
 // Define flag variable for motor direction
 bool motorDirectionForward = false;
 bool motorDirectionReverse = false;
 
 bool gradualSpeed = false;
-unsigned long smoothStartTime = 0;
+unsigned int smoothStartTime = 0;
 
 void setup()
 {
@@ -98,23 +102,9 @@ void setup()
   dht.begin();
 }
 
-
+String result = "";
 void loop()
 {
-  /**
-   * Temperature
-  */
-  // Call the function to read temperature in Fahrenheit
-  float temperatureFahrenheit = readTemperatureFahrenheit();
-
-  // Print the temperature to the primary serial port (for debugging)
-  Serial.print(F("Temperature (Fahrenheit): "));
-  Serial.println(temperatureFahrenheit);
-
-  // Send the temperature data over Bluetooth using Serial2
-  Serial2.print(F("Temperature (Fahrenheit): "));
-  Serial2.println(temperatureFahrenheit);
-
   /**
    * Steering release
    * Check if it's time to stop the steering motor
@@ -206,6 +196,24 @@ void loop()
   }
 
   /**
+   * Temperature
+  */
+  // Check if it's time to send temperature data (every 5 secs)
+  if (millis() - lastTemperatureTime >= temperatureInterval) {
+    // Call the function to read temperature in Fahrenheit
+    float temperatureFahrenheit = readTemperatureFahrenheit();
+    int temperatureInteger = int(floor(temperatureFahrenheit));
+    // Print the temperature to the primary serial port (for debugging)
+    Serial.print(F("Temperature (Fahrenheit): "));
+    Serial.println(temperatureInteger);
+
+    Serial2.println(temperatureInteger);
+
+    // Update the last temperature send time
+    lastTemperatureTime = millis();
+  }
+  
+  /**
    * Bluetooth communication, controls
    * 
    */
@@ -242,6 +250,19 @@ void loop()
       motorSpeed = data.substring(1).toInt();
       Serial.println("Motor Speed = " + String(motorSpeed));
       // Stop the robot to reset the speed
+      motorDirectionForward = false;
+      motorDirectionReverse = false;
+      stop();
+    }
+
+    // Steering Threshold Adjustment
+    if(data.startsWith("T")){
+      // Set the new motor speed
+      steeringRunDuration += data.substring(1).toInt();
+      // Limit the range of steeringRunDuration to 50-250
+      steeringRunDuration = constrain(steeringRunDuration, 50, 250);
+      Serial.println("Steering Speed = " + String(steeringRunDuration));
+      // Stop the robot to reset the steering threshold
       motorDirectionForward = false;
       motorDirectionReverse = false;
       stop();
@@ -316,5 +337,7 @@ void loop()
       }
     }
   }
+
+  
 }
 
