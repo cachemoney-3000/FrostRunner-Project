@@ -36,6 +36,8 @@ struct Location {
 #define NUM_ULTRASONIC_SENSORS 3
 #define COLLISION_THRESHOLD 10.0f // 10.0 cm, can be change
 
+#define FOLLOW_ME_DISTANCE 20.0f // 20.0 cm, can be change
+
 // Motors Pins
 #define REAR_MOTOR_IN1 9
 #define REAR_MOTOR_IN2 8

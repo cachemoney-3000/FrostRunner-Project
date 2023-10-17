@@ -21,6 +21,8 @@ int trigPin[NUM_ULTRASONIC_SENSORS];  // Array of trigger pins
 int echoPin[NUM_ULTRASONIC_SENSORS];  // Array of echo pins
 
 long ultrasonic_duration, ultrasonic_cm;
+
+boolean followEnabled = false;
 //******************************************************************************************************                                                                  
 // GPS Variables & Setup
 int GPS_Course;       // variable to hold the gps's determined course to destination
@@ -262,9 +264,41 @@ void loop()
       // Limit the range of steeringRunDuration to 50-250
       steeringRunDuration = constrain(steeringRunDuration, 50, 250);
       Serial.println("Steering Speed = " + String(steeringRunDuration));
+
+      Serial2.println(steeringRunDuration);
       // Stop the robot to reset the steering threshold
       motorDirectionForward = false;
       motorDirectionReverse = false;
+      stop();
+    }
+
+    // Follow Me logic
+    if (data.startsWith("F") || followEnabled) {
+
+      if (!followEnabled){
+        followEnabled = true;
+      }
+      // Read the ultrasonic sensor data
+      float distance = readUltrasonicSensor(trigPin, echoPin);
+      // Check if an object is within the desired follow distance
+      if (distance < desiredDistance) {
+        // Move the robot forward (adjust motor control functions accordingly)
+        forward(100);
+      } 
+      else if (distance < desiredDistance + 10) {
+        // Move the robot backward if the object is too close (within 10 cm)
+        backward();
+      }
+      else {
+        // Stop the robot (object is too far or not detected)
+        stop();
+      }
+    }
+
+    // Unfollow Me logic
+    if (data.startsWith("U")) {
+      // Stop following
+      followEnabled = false;
       stop();
     }
 
