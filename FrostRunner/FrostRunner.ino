@@ -281,13 +281,13 @@ void loop()
       // Read the ultrasonic sensor data
       float distance = readUltrasonicSensor(trigPin, echoPin);
       // Check if an object is within the desired follow distance
-      if (distance < desiredDistance) {
+      if (distance < FOLLOW_ME_DISTANCE) {
         // Move the robot forward (adjust motor control functions accordingly)
-        forward(100);
+        forward(80);
       } 
-      else if (distance < desiredDistance + 10) {
+      else if (distance < FOLLOW_ME_DISTANCE + 10) {
         // Move the robot backward if the object is too close (within 10 cm)
-        backward();
+        backward(80);
       }
       else {
         // Stop the robot (object is too far or not detected)
