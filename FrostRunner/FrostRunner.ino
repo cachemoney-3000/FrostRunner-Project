@@ -42,7 +42,7 @@ QMC5883LCompass compass;
 //******************************************************************************************************
 // Motor Variables & Setup
 int steeringSpeed = 255;
-int motorSpeed = 150;
+int motorSpeed = 255;
 
 unsigned int motorStartTime = 0;  // Variable to store the time when the steering command was triggered
 
@@ -122,29 +122,29 @@ void loop()
    * 
    */
   if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
-    if (millis() - smoothStartTime < 1000) {
+    if (millis() - smoothStartTime < 500) {
       Serial.println("1");
       analogWrite(REAR_MOTOR_ENA, 100);
     } 
-    else if (millis() - smoothStartTime < 1500) {
+    else if (millis() - smoothStartTime < 1000) {
       Serial.println("2");
       analogWrite(REAR_MOTOR_ENA, 125);
     } 
-    else if (millis() - smoothStartTime< 2000) {
+    else if (millis() - smoothStartTime< 1500) {
       Serial.println("3");
-      analogWrite(REAR_MOTOR_ENA, 150);
+      analogWrite(REAR_MOTOR_ENA, 180);
 
       if (motorSpeed == 150) {
         gradualSpeed = true;
       }
     } 
     // Motor speed is 255
-    if (millis() - smoothStartTime > 2000 && motorSpeed == 255){
-      if (millis() - smoothStartTime < 2500) {
+    if (millis() - smoothStartTime > 1500 && motorSpeed == 255){
+      if (millis() - smoothStartTime < 1800) {
         Serial.println("4");
-        analogWrite(REAR_MOTOR_ENA, 180);
+        analogWrite(REAR_MOTOR_ENA, 200);
       }
-      else if (millis() - smoothStartTime < 3000) {
+      else if (millis() - smoothStartTime < 2000) {
         Serial.println("5");
         analogWrite(REAR_MOTOR_ENA, 225);
       }
@@ -160,7 +160,7 @@ void loop()
    * Object avoidance logic
    * 
    */
-  if (motorDirectionReverse) {
+  if (!followEnabled && motorDirectionReverse) {
     // Read the back sensor
     float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
     Serial.print("Back Sensor: ");
@@ -174,7 +174,7 @@ void loop()
     }
   } 
   // Forward
-  else if (motorDirectionForward) {
+  else if (!followEnabled && motorDirectionForward) {
     bool obstacleDetected = false;
     // Read the front sensors
     for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
@@ -209,6 +209,7 @@ void loop()
     Serial.print(F("Temperature (Fahrenheit): "));
     Serial.println(temperatureInteger);
 
+    // Send the temperature data to Phone
     Serial2.println(temperatureInteger);
 
     // Update the last temperature send time
@@ -261,8 +262,8 @@ void loop()
     if(data.startsWith("T")){
       // Set the new motor speed
       steeringRunDuration += data.substring(1).toInt();
-      // Limit the range of steeringRunDuration to 50-250
-      steeringRunDuration = constrain(steeringRunDuration, 50, 250);
+      // Limit the range of steeringRunDuration to 50-300
+      steeringRunDuration = constrain(steeringRunDuration, 50, 300);
       Serial.println("Steering Speed = " + String(steeringRunDuration));
 
       Serial2.println(steeringRunDuration);
@@ -283,11 +284,11 @@ void loop()
       // Check if an object is within the desired follow distance
       if (distance < FOLLOW_ME_DISTANCE) {
         // Move the robot forward (adjust motor control functions accordingly)
-        forward(80);
+        forward(200);
       } 
       else if (distance < FOLLOW_ME_DISTANCE + 10) {
         // Move the robot backward if the object is too close (within 10 cm)
-        backward(80);
+        reverse(150);
       }
       else {
         // Stop the robot (object is too far or not detected)
