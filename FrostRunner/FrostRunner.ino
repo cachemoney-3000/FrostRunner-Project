@@ -23,6 +23,8 @@ int echoPin[NUM_ULTRASONIC_SENSORS];  // Array of echo pins
 long ultrasonic_duration, ultrasonic_cm;
 
 boolean followEnabled = false;
+const unsigned long sensorReadInterval = 1000; // Interval to read sensors (in milliseconds)
+unsigned long lastSensorReadTime = 0; // Variable to store the last time sensors were read
 //******************************************************************************************************                                                                  
 // GPS Variables & Setup
 int GPS_Course;       // variable to hold the gps's determined course to destination
@@ -49,7 +51,7 @@ unsigned int motorStartTime = 0;  // Variable to store the time when the steerin
 // Steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
-unsigned int steeringRunDuration = 200;  // Threshold for steering
+unsigned int steeringRunDuration = 250;  // Threshold for steering
 
 // Define flag variable for motor direction
 bool motorDirectionForward = false;
@@ -121,35 +123,35 @@ void loop()
    * Gradual Speed logic
    * 
    */
-  if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
-    if (millis() - smoothStartTime < 500) {
-      Serial.println("1");
-      analogWrite(REAR_MOTOR_ENA, 100);
+  if (!followEnabled && (motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
+    if (millis() - smoothStartTime < 250) {
+      //Serial.println("1");
+      analogWrite(REAR_MOTOR_ENA, 150);
     } 
-    else if (millis() - smoothStartTime < 1000) {
-      Serial.println("2");
-      analogWrite(REAR_MOTOR_ENA, 125);
-    } 
-    else if (millis() - smoothStartTime< 1500) {
-      Serial.println("3");
+    else if (millis() - smoothStartTime < 500) {
+      //Serial.println("2");
       analogWrite(REAR_MOTOR_ENA, 180);
+    } 
+    if (millis() - smoothStartTime< 750) {
+      //Serial.println("3");
+      analogWrite(REAR_MOTOR_ENA, 200);
 
-      if (motorSpeed == 150) {
+      if (motorSpeed == 200) {
         gradualSpeed = true;
       }
     } 
     // Motor speed is 255
-    if (millis() - smoothStartTime > 1500 && motorSpeed == 255){
-      if (millis() - smoothStartTime < 1800) {
-        Serial.println("4");
+    if (millis() - smoothStartTime > 750 && motorSpeed == 255){
+      if (millis() - smoothStartTime < 800) {
+        //Serial.println("4");
         analogWrite(REAR_MOTOR_ENA, 200);
       }
-      else if (millis() - smoothStartTime < 2000) {
-        Serial.println("5");
+      else if (millis() - smoothStartTime < 900) {
+        //Serial.println("5");
         analogWrite(REAR_MOTOR_ENA, 225);
       }
       else {
-        Serial.println("6");
+        //Serial.println("6");
         analogWrite(REAR_MOTOR_ENA, motorSpeed);
         gradualSpeed = true;
       }
@@ -160,12 +162,14 @@ void loop()
    * Object avoidance logic
    * 
    */
-  if (!followEnabled && motorDirectionReverse) {
+  unsigned long currentTime = millis();
+  if (!followEnabled && motorDirectionReverse && (currentTime - lastSensorReadTime >= sensorReadInterval)) {
+    lastSensorReadTime = currentTime;
     // Read the back sensor
     float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
-    Serial.print("Back Sensor: ");
+    /* Serial.print("Back Sensor: ");
     Serial.print(distance);
-    Serial.println(" ultrasonic_cm");
+    Serial.println(" ultrasonic_cm"); */
 
     // Check if the back sensor reading is below the collision threshold
     if (distance < COLLISION_THRESHOLD) {
@@ -174,56 +178,29 @@ void loop()
     }
   } 
   // Forward
-  else if (!followEnabled && motorDirectionForward) {
+  else if (!followEnabled && motorDirectionForward && (currentTime - lastSensorReadTime >= sensorReadInterval)) {
+    lastSensorReadTime = currentTime;
     bool obstacleDetected = false;
     // Read the front sensors
-    /* for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
+    for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
       float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
-      Serial.print("Front Sensor ");
+      /* Serial.print("Front Sensor ");
       Serial.print(i + 1);
       Serial.print(": ");
       Serial.print(distance);
-      Serial.println(" ultrasonic_cm");
+      Serial.println(" ultrasonic_cm"); */
 
       if (distance < COLLISION_THRESHOLD) {
         obstacleDetected = true;
         break; // Exit the loop early if an obstacle is detected
       }
-    } */
-      float distance = readUltrasonicSensor(trigPin[0], echoPin[0]);
-      Serial.print("Front Sensor ");
-      Serial.print(": ");
-      Serial.print(distance);
-      Serial.println(" ultrasonic_cm");
-
-      if (distance < COLLISION_THRESHOLD) {
-        obstacleDetected = true;
-      }
-
-     // If an obstacle is detected by any front sensor, call the stop function
+    }
+    // If an obstacle is detected by any front sensor, call the stop function
     if (obstacleDetected) {
       stop();
     }
   }
 
-  /**
-   * Temperature
-  */
-  // Check if it's time to send temperature data (every 5 secs)
-  if (millis() - lastTemperatureTime >= temperatureInterval) {
-    // Call the function to read temperature in Fahrenheit
-    float temperatureFahrenheit = readTemperatureFahrenheit();
-    int temperatureInteger = int(floor(temperatureFahrenheit));
-    // Print the temperature to the primary serial port (for debugging)
-    Serial.print(F("Temperature (Fahrenheit): "));
-    Serial.println(temperatureInteger);
-
-    // Send the temperature data to Phone
-    Serial2.println(temperatureInteger);
-
-    // Update the last temperature send time
-    lastTemperatureTime = millis();
-  }
   
   /**
    * Bluetooth communication, controls
@@ -241,13 +218,13 @@ void loop()
         case 3:
           // Left
           if (steeringLocation > -1) {
-            steerLeft(false);
+            steeringLocation = steerLeft(false, steeringLocation);
           }
           break;
         case 4:
           // Right
           if (steeringLocation < 1) {
-            steerRight(false);
+            steeringLocation = steerRight(false, steeringLocation);
           }
           break;
         default:
@@ -255,7 +232,7 @@ void loop()
           break;
       }
     }
-    
+
     // Motor speed adjustment
     if(data.startsWith("S")){
       // Set the new motor speed
@@ -265,6 +242,19 @@ void loop()
       motorDirectionForward = false;
       motorDirectionReverse = false;
       stop();
+    }
+
+    // Temperature
+    if(data.startsWith("P")){
+      // Call the function to read temperature in Fahrenheit
+      float temperatureFahrenheit = readTemperatureFahrenheit();
+      int temperatureInteger = int(floor(temperatureFahrenheit));
+      // Print the temperature to the primary serial port (for debugging)
+      //Serial.print(F("Temperature (Fahrenheit): "));
+      //Serial.println(temperatureInteger);
+
+      // Send the temperature data to Phone
+      Serial2.println(temperatureInteger);
     }
 
     // Steering Threshold Adjustment

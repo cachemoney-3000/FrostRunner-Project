@@ -86,7 +86,7 @@ void drive(float distance, float bearing) {
             // Turn right (clockwise)
             if (steeringLocation < 1) {
                 Serial.println("Right");
-                steerRight(false);
+                steeringLocation = steerRight(false, steeringLocation);
                 straightenWheel(); 
             }
         } 
@@ -94,7 +94,7 @@ void drive(float distance, float bearing) {
             // Turn left (counterclockwise)
             if (steeringLocation > -1) {
                 Serial.println("Left");
-                steerLeft(false);
+                steeringLocation = steerLeft(false, steeringLocation);
                 straightenWheel(); 
             }
         }
