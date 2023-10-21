@@ -177,7 +177,7 @@ void loop()
   else if (!followEnabled && motorDirectionForward) {
     bool obstacleDetected = false;
     // Read the front sensors
-    for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
+    /* for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
       float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
       Serial.print("Front Sensor ");
       Serial.print(i + 1);
@@ -189,7 +189,16 @@ void loop()
         obstacleDetected = true;
         break; // Exit the loop early if an obstacle is detected
       }
-    }
+    } */
+      float distance = readUltrasonicSensor(trigPin[0], echoPin[0]);
+      Serial.print("Front Sensor ");
+      Serial.print(": ");
+      Serial.print(distance);
+      Serial.println(" ultrasonic_cm");
+
+      if (distance < COLLISION_THRESHOLD) {
+        obstacleDetected = true;
+      }
 
      // If an obstacle is detected by any front sensor, call the stop function
     if (obstacleDetected) {
