@@ -13,6 +13,18 @@ void Startup()
   Serial2.println(String(Number_of_SATS) + " Satellites Acquired");     
 }    
 
+bool checkSatellites() {
+  int numSatellite = (int)(gps.satellites.value());
+  if (numSatellite <= 3) {
+    Serial2.println("No Satellites Found...");
+    return false;
+  }
+  else {
+    Serial2.println(String(numSatellite) + " Satellites Acquired");     
+    return true;
+  }
+}
+
 
 void displayInfo()
 {

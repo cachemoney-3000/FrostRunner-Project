@@ -124,15 +124,15 @@ void loop()
    * 
    */
   if (!followEnabled && (motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
-    if (millis() - smoothStartTime < 250) {
+    if (millis() - smoothStartTime < 100) {
       //Serial.println("1");
       analogWrite(REAR_MOTOR_ENA, 150);
     } 
-    else if (millis() - smoothStartTime < 500) {
+    else if (millis() - smoothStartTime < 250) {
       //Serial.println("2");
       analogWrite(REAR_MOTOR_ENA, 180);
     } 
-    if (millis() - smoothStartTime< 750) {
+    if (millis() - smoothStartTime< 500) {
       //Serial.println("3");
       analogWrite(REAR_MOTOR_ENA, 200);
 
@@ -141,12 +141,12 @@ void loop()
       }
     } 
     // Motor speed is 255
-    if (millis() - smoothStartTime > 750 && motorSpeed == 255){
+    if (millis() - smoothStartTime > 500 && motorSpeed == 255){
       if (millis() - smoothStartTime < 800) {
         //Serial.println("4");
         analogWrite(REAR_MOTOR_ENA, 200);
       }
-      else if (millis() - smoothStartTime < 900) {
+      else if (millis() - smoothStartTime < 600) {
         //Serial.println("5");
         analogWrite(REAR_MOTOR_ENA, 225);
       }
@@ -175,6 +175,7 @@ void loop()
     if (distance < COLLISION_THRESHOLD) {
       // Call the stop function immediately
       stop();
+      Serial2.println("Obstacle Detected!");
     }
   } 
   // Forward
@@ -198,6 +199,7 @@ void loop()
     // If an obstacle is detected by any front sensor, call the stop function
     if (obstacleDetected) {
       stop();
+      Serial2.println("Obstacle Detected!");
     }
   }
 
@@ -234,7 +236,7 @@ void loop()
     }
 
     // Motor speed adjustment
-    if(data.startsWith("S")){
+    else if(data.startsWith("S")){
       // Set the new motor speed
       motorSpeed = data.substring(1).toInt();
       Serial.println("Motor Speed = " + String(motorSpeed));
@@ -245,7 +247,7 @@ void loop()
     }
 
     // Temperature
-    if(data.startsWith("P")){
+    else if(data.startsWith("P")){
       // Call the function to read temperature in Fahrenheit
       float temperatureFahrenheit = readTemperatureFahrenheit();
       int temperatureInteger = int(floor(temperatureFahrenheit));
@@ -258,7 +260,7 @@ void loop()
     }
 
     // Steering Threshold Adjustment
-    if(data.startsWith("T")){
+    else if(data.startsWith("T")){
       // Set the new motor speed
       steeringRunDuration += data.substring(1).toInt();
       // Limit the range of steeringRunDuration to 50-300
@@ -273,7 +275,7 @@ void loop()
     }
 
     // Follow Me logic
-    if (data.startsWith("F") || followEnabled) {
+    else if (data.startsWith("F") || followEnabled) {
 
       if (!followEnabled){
         followEnabled = true;
@@ -296,14 +298,14 @@ void loop()
     }
 
     // Unfollow Me logic
-    if (data.startsWith("U")) {
+    else if (data.startsWith("U")) {
       // Stop following
       followEnabled = false;
       stop();
     }
 
     // Movement Instructions
-    if(data.startsWith("M")){
+    else if(data.startsWith("M")){
       String instructionStr = data.substring(1); // Remove the "M" prefix
       movementInstruction = instructionStr.toInt(); // Convert to an integer
 
@@ -332,30 +334,17 @@ void loop()
    
     // Summon Instructions, Get the GPS coordinate from user's phone
     else {
+      bool isSatelliteAcquired = checkSatellites()
       int separatorIndex = data.indexOf('/');
+
       // Split the location string into longitude and latitude
-      if (separatorIndex != -1) {
+      if (isSatelliteAcquired && separatorIndex != -1) {
         String longitudeStr = data.substring(0, separatorIndex);
         String latitudeStr = data.substring(separatorIndex + 1);
 
         // Convert latitude and longitude to float values
         float newTargetLatitude = latitudeStr.toDouble();
         float newTargetLongitude = longitudeStr.toDouble();
-
-        // Only re-run this part of code if we have new longitude and latitude values
-        /* if (newTargetLatitude != targetLatitude || newTargetLongitude != targetLongitude) {
-          targetLatitude = newTargetLatitude;
-          targetLongitude = newTargetLongitude;
-
-          Location phoneLoc;
-          phoneLoc.latitude = targetLatitude;
-          phoneLoc.longitude = targetLongitude;
-
-          Serial.println("Target Longitude: " + String(targetLongitude, 8));
-          Serial.println("Target Latitude: " + String(targetLatitude, 8));
-
-          driveTo(phoneLoc, 25);
-        } */
 
         targetLatitude = newTargetLatitude;
         targetLongitude = newTargetLongitude;

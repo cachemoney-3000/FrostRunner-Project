@@ -7,6 +7,7 @@ void driveTo(struct Location &phoneLoc, int timeout) {
     // Start move loop here
     do {
         robotLoc = getGPS();
+
         Serial.println("Robot Longitude: " + String(robotLoc.longitude, 8));
         Serial.println("Robot Latitude: " + String(robotLoc.latitude, 8));
         
@@ -34,6 +35,7 @@ void driveTo(struct Location &phoneLoc, int timeout) {
                 if (distance < COLLISION_THRESHOLD) {
                     // Call the stop function immediately
                     stop();
+                    Serial2.println("Obstacle Detected!");
                     break; // Exit the loop early if an obstacle is detected
                 }
             } 
@@ -52,6 +54,7 @@ void driveTo(struct Location &phoneLoc, int timeout) {
                 // If an obstacle is detected by any front sensor, call the stop function
                 if (obstacleDetected) {
                     stop();
+                    Serial2.println("Obstacle Detected!");
                     break; // Exit the loop early if an obstacle is detected
                 }
             }
@@ -63,7 +66,7 @@ void driveTo(struct Location &phoneLoc, int timeout) {
             timeout -= 1;
         }
         
-    } while (distance > 1.0 && timeout > 0);
+    } while (distance > 1.0 && timeout > 0 && !obstacleDetected);
 
     stop();
   }
@@ -142,7 +145,6 @@ float geoBearing(struct Location &robotLoc, struct Location &phoneLoc) {
     if (bearing < 0) {
         bearing += 360.0;
     }
-    
     return bearing;
 }
 
