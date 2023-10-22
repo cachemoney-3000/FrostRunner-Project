@@ -51,7 +51,7 @@ unsigned int motorStartTime = 0;  // Variable to store the time when the steerin
 // Steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
-unsigned int steeringRunDuration = 250;  // Threshold for steering
+unsigned int steeringRunDuration = 300;  // Threshold for steering
 
 // Define flag variable for motor direction
 bool motorDirectionForward = false;
@@ -167,9 +167,9 @@ void loop()
     lastSensorReadTime = currentTime;
     // Read the back sensor
     float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
-    /* Serial.print("Back Sensor: ");
+    Serial.print("Back Sensor: ");
     Serial.print(distance);
-    Serial.println(" ultrasonic_cm"); */
+    Serial.println(" ultrasonic_cm");
 
     // Check if the back sensor reading is below the collision threshold
     if (distance < COLLISION_THRESHOLD) {
@@ -185,13 +185,15 @@ void loop()
     // Read the front sensors
     for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
       float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
-      /* Serial.print("Front Sensor ");
+      Serial.print("Front Sensor ");
       Serial.print(i + 1);
       Serial.print(": ");
       Serial.print(distance);
-      Serial.println(" ultrasonic_cm"); */
+      Serial.println(" ultrasonic_cm");
 
       if (distance < COLLISION_THRESHOLD) {
+        Serial.print("Collision detected at");
+        Serial.print(i + 1);
         obstacleDetected = true;
         break; // Exit the loop early if an obstacle is detected
       }
@@ -252,11 +254,11 @@ void loop()
       float temperatureFahrenheit = readTemperatureFahrenheit();
       int temperatureInteger = int(floor(temperatureFahrenheit));
       // Print the temperature to the primary serial port (for debugging)
-      //Serial.print(F("Temperature (Fahrenheit): "));
-      //Serial.println(temperatureInteger);
+      Serial.print(F("Temperature (Fahrenheit): "));
+      Serial.println(temperatureInteger);
 
       // Send the temperature data to Phone
-      Serial2.println(temperatureInteger);
+      Serial2.println("T" + String(temperatureInteger));
     }
 
     // Steering Threshold Adjustment
@@ -319,7 +321,8 @@ void loop()
         case 2:
           // Reverse
           if (!motorDirectionReverse) {
-            reverse(motorSpeed - 50);
+            reverse(motorSpeed);
+            Serial.println("Reverse");
           }
           break;
         case 9:
@@ -357,6 +360,8 @@ void loop()
         Serial.println("Target Latitude: " + String(targetLatitude, 8));
 
         driveTo(phoneLoc, 25);
+        straightenWheel(); 
+        stop();
       }
     }
   }

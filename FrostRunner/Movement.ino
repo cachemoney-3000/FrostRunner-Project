@@ -70,8 +70,8 @@ void forward(int speed) {
 
 void reverse(int speed) {
   // Start time
-  smoothStartTime = millis();
-  gradualSpeed = false;
+  //smoothStartTime = millis();
+  //gradualSpeed = false;
   // Backward
   digitalWrite(REAR_MOTOR_IN1, LOW);
   digitalWrite(REAR_MOTOR_IN2, HIGH);

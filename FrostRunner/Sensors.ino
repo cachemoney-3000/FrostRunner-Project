@@ -1,9 +1,6 @@
 // Function to read temperature in Fahrenheit
 float readTemperatureFahrenheit() {
   // Reading temperature or humidity takes about 250 milliseconds.
-  // Sensor readings may also be up to 2 seconds 'old' (it's a slow sensor)
-  delay(2000);
-
   // Read temperature as Fahrenheit
   float f = dht.readTemperature(true);
 
