@@ -334,7 +334,7 @@ void loop()
    
     // Summon Instructions, Get the GPS coordinate from user's phone
     else {
-      bool isSatelliteAcquired = checkSatellites()
+      bool isSatelliteAcquired = checkSatellites();
       int separatorIndex = data.indexOf('/');
 
       // Split the location string into longitude and latitude

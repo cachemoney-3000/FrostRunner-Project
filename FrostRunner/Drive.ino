@@ -66,7 +66,7 @@ void driveTo(struct Location &phoneLoc, int timeout) {
             timeout -= 1;
         }
         
-    } while (distance > 1.0 && timeout > 0 && !obstacleDetected);
+    } while (distance > 1.0 && timeout > 0);
 
     stop();
   }
