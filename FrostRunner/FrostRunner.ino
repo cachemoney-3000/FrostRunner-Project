@@ -111,8 +111,8 @@ void setup()
 
   // Temperature
   dht.begin();
-  compass.setCalibrationOffsets(967.00, 294.00, -392.00)
-  compass.setCalibrationScales(0.89, 0.91, 1.28)
+  compass.setCalibrationOffsets(967.00, 294.00, -392.00);
+  compass.setCalibrationScales(0.89, 0.91, 1.28);
 }
 
 String result = "";
@@ -222,37 +222,120 @@ void loop()
   while (Serial2.available() > 0 || selfDrivingInProgress){
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
+    // Movement Instructions
+    if(data.startsWith("M")){
+      String instructionStr = data.substring(1); // Remove the "M" prefix
+      movementInstruction = instructionStr.toInt(); // Convert to an integer
+
+      switch (movementInstruction) {
+        case 1:
+          // Forward
+          if (!motorDirectionForward  && !selfDrivingInProgress) {
+            forward(motorSpeed);
+          }
+          break;
+        case 2:
+          // Reverse
+          if (!motorDirectionReverse  && !selfDrivingInProgress) {
+            reverse(motorSpeed);
+            Serial.println("Reverse");
+          }
+          break;
+        case 9:
+          // Stop
+          stop();
+          if (selfDrivingInProgress){
+            Serial.println("Self Driving Stop");
+            selfDrivingInProgress = false;
+            globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
+          }
+
+          break;
+        default:
+          Serial.println("Invalid Movement Instruction");
+          break;
+      }
+    }
+    // Steering logic
+    if (data.startsWith("C") && !selfDrivingInProgress) { 
+      int servoInput = data.substring(1).toInt();
+
+      switch (servoInput) {
+        case 3:
+          // Left
+          if (steeringLocation > -1) {
+            steeringLocation = steerLeft(false, steeringLocation);
+          }
+          break;
+        case 4:
+          // Right
+          if (steeringLocation < 1) {
+            steeringLocation = steerRight(false, steeringLocation);
+          }
+          break;
+        default:
+          Serial.println("Invalid Movement Instruction");
+          break;
+      }
+    }
 
     if(selfDrivingInProgress){
       Serial.println("SELF DRIVING IN PROGRESS");
+      // When we are in reverse, read the back sensor
+      if (motorDirectionReverse) {
+          // Read the back sensor
+          float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
+          // Check if the back sensor reading is below the collision threshold
+          if (distance < COLLISION_THRESHOLD) {
+              // Call the stop function immediately
+              stop();
+              selfDrivingInProgress = false;
+              Serial2.println("Obstacle Detected!");
+              Serial.println("Obstacle Detected!");
+              break; // Exit the loop early if an obstacle is detected
+          }
+      } 
+      // Forward
+      else if (motorDirectionForward) {
+          bool obstacleDetected = false;
+          int ultrasensorTriggered = -1;
+          // Read the front sensors
+          // 0 = TRIG_PIN_FRONT_RIGHT
+          // 1 = TRIG_PIN_FRONT_LEFT
+          for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
+              float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
+              
+              if (distance < COLLISION_THRESHOLD) {
+                  ultrasensorTriggered = i;
+                  obstacleDetected = true;
+                  break; // Exit the loop early if an obstacle is detected
+              }
+          }
+
+          // If an obstacle is detected by any front sensor, call the stop function
+          if (obstacleDetected) {
+              if(ultrasensorTriggered == 0) { // Right
+                  //steeringLocation = steerLeft(false, steeringLocation);
+                  Serial.println("Obstacle Detected: Try Left");
+              } else if(ultrasensorTriggered == 1) { // Left
+                  //steeringLocation = steerRight(false, steeringLocation);
+                  Serial.println("Obstacle Detected: : Try Right");
+              }
+              stop();
+              selfDrivingInProgress = false;
+              Serial2.println("Obstacle Detected!");
+              Serial.println("Obstacle Detected!");
+              break; // Exit the loop early if an obstacle is detected
+          }
+      }
+      
       driveTo(phoneLoc);
     }
     if (data.length() > 0){
-      // Steering logic
-      if (data.startsWith("C") && !selfDrivingInProgress) { 
-        int servoInput = data.substring(1).toInt();
-
-        switch (servoInput) {
-          case 3:
-            // Left
-            if (steeringLocation > -1) {
-              steeringLocation = steerLeft(false, steeringLocation);
-            }
-            break;
-          case 4:
-            // Right
-            if (steeringLocation < 1) {
-              steeringLocation = steerRight(false, steeringLocation);
-            }
-            break;
-          default:
-            Serial.println("Invalid Movement Instruction");
-            break;
-        }
-      }
+      
 
       // Motor speed adjustment
-      else if(data.startsWith("S") && !selfDrivingInProgress){
+      if(data.startsWith("S") && !selfDrivingInProgress){
         // Set the new motor speed
         motorSpeed = data.substring(1).toInt();
         Serial.println("Motor Speed = " + String(motorSpeed));
@@ -290,40 +373,6 @@ void loop()
         stop();
       }
 
-      // Movement Instructions
-      else if(data.startsWith("M")){
-        String instructionStr = data.substring(1); // Remove the "M" prefix
-        movementInstruction = instructionStr.toInt(); // Convert to an integer
-
-        switch (movementInstruction) {
-          case 1:
-            // Forward
-            if (!motorDirectionForward  && !selfDrivingInProgress) {
-              forward(motorSpeed);
-            }
-            break;
-          case 2:
-            // Reverse
-            if (!motorDirectionReverse  && !selfDrivingInProgress) {
-              reverse(motorSpeed);
-              Serial.println("Reverse");
-            }
-            break;
-          case 9:
-            // Stop
-            stop();
-            if (selfDrivingInProgress){
-              selfDrivingInProgress = false;
-              globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
-            }
-
-            break;
-          default:
-            Serial.println("Invalid Movement Instruction");
-            break;
-        }
-      }
-    
       // Summon Instructions, Get the GPS coordinate from user's phone
       else if(data.startsWith("X")){
         bool isSatelliteAcquired = checkSatellites();

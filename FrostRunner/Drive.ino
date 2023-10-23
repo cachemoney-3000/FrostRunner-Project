@@ -1,12 +1,16 @@
 // Go to the location specified by phoneLoc (latitude, longitude)
 void driveTo(struct Location &phoneLoc) {
   Location robotLoc = getGPS();
+  //robotLoc.latitude = 28.59108000;
+  //robotLoc.longitude = -81.46820800;
 
   if (robotLoc.latitude != 0 && robotLoc.longitude != 0) {
     float distance = geoDistance(robotLoc, phoneLoc);;
 
     robotLoc = getGPS(); // Get robot coordinates
-    
+    //robotLoc.latitude = 28.59108000;
+    //robotLoc.longitude = -81.46820800;
+
     Serial.println("Robot Longitude: " + String(robotLoc.longitude, 8));
     Serial.println("Robot Latitude: " + String(robotLoc.latitude, 8));
     
@@ -32,64 +36,7 @@ void driveTo(struct Location &phoneLoc) {
         Serial.print("Heading: ");
         Serial.println(heading);
         
-        if (motorDirectionFoward || motorDirectionBackward){
-            // Check if the motor has been running for 2 seconds
-            if (!haltReleased && (millis() - forwardReverseStartTime >= 2000)) {
-                halt();
-                forwardReverseStartTime = 0
-                haltReleased = true;
-                delay(500); // Add a 500ms delay
-            }
-        }
-
-        // When we are in reverse, read the back sensor
-        if (motorDirectionReverse) {
-            // Read the back sensor
-            float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
-            // Check if the back sensor reading is below the collision threshold
-            if (distance < COLLISION_THRESHOLD) {
-                // Call the stop function immediately
-                stop();
-                Serial2.println("Obstacle Detected!");
-                Serial.println("Obstacle Detected!");
-                //break; // Exit the loop early if an obstacle is detected
-            }
-        } 
-        // Forward
-        else if (motorDirectionForward) {
-            bool obstacleDetected = false;
-            int ultrasensorTriggered = -1;
-            // Read the front sensors
-            // 0 = TRIG_PIN_FRONT_RIGHT
-            // 1 = TRIG_PIN_FRONT_LEFT
-            for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
-                float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
-                
-                if (distance < COLLISION_THRESHOLD) {
-                    ultrasensorTriggered = i;
-                    obstacleDetected = true;
-                    break; // Exit the loop early if an obstacle is detected
-                }
-            }
-
-            // If an obstacle is detected by any front sensor, call the stop function
-            if (obstacleDetected) {
-                reverse(SELF_DRIVING_REVERSE_SPEED);  // Adjust the speed as needed
-                Serial.println("Obstacle Detected: Reverse");
-                delay(500);
-                if(ultrasensorTriggered == 0) { // Right
-                    steeringLocation = steerLeft(false, steeringLocation);
-                    Serial.println("Obstacle Detected: Try Left");
-                } else if(ultrasensorTriggered == 1) { // Left
-                    steeringLocation = steerRight(false, steeringLocation);
-                    Serial.println("Obstacle Detected: : Try Right");
-                }
-                //stop();
-                Serial2.println("Obstacle Detected!");
-                Serial.println("Obstacle Detected!");
-                //break; // Exit the loop early if an obstacle is detected
-            }
-        }
+        
         
         // TODO drive -> Motor controls
         drive(distance, bearing);
