@@ -32,7 +32,16 @@ void driveTo(struct Location &phoneLoc) {
         Serial.print("Heading: ");
         Serial.println(heading);
         
-        
+        if (motorDirectionFoward || motorDirectionBackward){
+            // Check if the motor has been running for 2 seconds
+            if (!haltReleased && (millis() - forwardReverseStartTime >= 2000)) {
+                halt();
+                forwardReverseStartTime = 0
+                haltReleased = true;
+                delay(500); // Add a 500ms delay
+            }
+        }
+
         // When we are in reverse, read the back sensor
         if (motorDirectionReverse) {
             // Read the back sensor
@@ -137,10 +146,14 @@ void drive(float distance, float bearing) {
     if (distance > distanceTolerance) {
         Serial.println("Forward");
         forward(SELF_DRIVING_FORWARD_SPEED);  // Adjust the speed as needed
+        forwardReverseStartTime = millis();
+        haltReleased = false;
     } 
     else if (distance < -distanceTolerance) {
         Serial.println("Reverse");
         reverse(SELF_DRIVING_REVERSE_SPEED);  // Adjust the speed as needed
+        forwardReverseStartTime = millis();
+        haltReleased = false;
     } 
     else {
         Serial.println("Stop");

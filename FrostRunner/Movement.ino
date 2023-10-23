@@ -110,3 +110,14 @@ void steeringRelease() {
   digitalWrite(STEERING_MOTOR_IN3,LOW);
   digitalWrite(STEERING_MOTOR_IN4,LOW);
 }
+
+void halt() {
+  gradualSpeed = false;
+  digitalWrite(REAR_MOTOR_IN1,LOW);
+  digitalWrite(REAR_MOTOR_IN2,LOW);
+
+  Serial.println("Halt");
+
+  motorDirectionForward = false;
+  motorDirectionReverse = false;
+}

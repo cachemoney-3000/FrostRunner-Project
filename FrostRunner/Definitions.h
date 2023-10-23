@@ -50,6 +50,8 @@ struct Location {
 #define SELF_DRIVING_FORWARD_SPEED 200
 #define SELF_DRIVING_REVERSE_SPEED 180
 #define GLOBAL_SELF_DRIVING_TIMEOUT 25 
+#define DISTANCE_TOLERANCE 15.0
+#define BEARING_TOLERANCE 5.0
 
 // Temperature Sensor Pins
 #define DHTPIN 50   // Digital pi

@@ -60,6 +60,10 @@ unsigned int steeringRunDuration = 300;  // Threshold for steering
 bool motorDirectionForward = false;
 bool motorDirectionReverse = false;
 
+// Self Driving
+unsigned int forwardReverseStartTime = 0;
+bool haltReleased = true;
+
 bool gradualSpeed = false;
 unsigned int smoothStartTime = 0;
 
@@ -107,6 +111,8 @@ void setup()
 
   // Temperature
   dht.begin();
+  compass.setCalibrationOffsets(967.00, 294.00, -392.00)
+  compass.setCalibrationScales(0.89, 0.91, 1.28)
 }
 
 String result = "";
