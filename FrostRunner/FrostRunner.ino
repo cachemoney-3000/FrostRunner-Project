@@ -326,7 +326,7 @@ void loop()
         
 
         // Split the location string into longitude and latitude
-        if (!selfDrivingInProgress) {
+        if (!selfDrivingInProgress && isSatelliteAcquired && separatorIndex != -1) {
           String longitudeStr = data.substring(0, separatorIndex);
           String latitudeStr = data.substring(separatorIndex + 1);
 

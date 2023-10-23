@@ -1,7 +1,7 @@
 void Startup()
 {
-  Serial.println("Searching for Satellites "); 
-  Serial2.println("Searching for Satellites..."); 
+  Serial.println("Searching for Satellites"); 
+  Serial2.println("Searching for Satellites"); 
       
   while (Number_of_SATS <= 3)                         // Wait until x number of satellites are acquired before starting main loop
   {       
@@ -17,7 +17,7 @@ bool checkSatellites() {
   checkGPS();
   int numSatellite = (int)(gps.satellites.value());
   if (numSatellite <= 3) {
-    Serial2.println("No Satellites Found...");
+    Serial2.println("No Satellites Found");
     return false;
   }
   else {
