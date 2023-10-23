@@ -37,6 +37,9 @@ String location="";
 float targetLatitude = 0; // = 28.59108000;
 float targetLongitude = 0; // = -81.46820800;
 int movementInstruction = 0;
+bool selfDrivingInProgress = false;
+int globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
+Location phoneLoc;
 //******************************************************************************************************
 // Compass Variables & Setup
 QMC5883LCompass compass;
@@ -123,7 +126,7 @@ void loop()
    * Gradual Speed logic
    * 
    */
-  if (!followEnabled && (motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
+  if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
     if (millis() - smoothStartTime < 100) {
       //Serial.println("1");
       analogWrite(REAR_MOTOR_ENA, 150);
@@ -163,7 +166,7 @@ void loop()
    * 
    */
   unsigned long currentTime = millis();
-  if (!followEnabled && motorDirectionReverse && (currentTime - lastSensorReadTime >= sensorReadInterval)) {
+  if (!selfDrivingInProgress && motorDirectionReverse && (currentTime - lastSensorReadTime >= sensorReadInterval)) {
     lastSensorReadTime = currentTime;
     // Read the back sensor
     float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
@@ -179,7 +182,7 @@ void loop()
     }
   } 
   // Forward
-  else if (!followEnabled && motorDirectionForward && (currentTime - lastSensorReadTime >= sensorReadInterval)) {
+  else if (!selfDrivingInProgress && motorDirectionForward && (currentTime - lastSensorReadTime >= sensorReadInterval)) {
     lastSensorReadTime = currentTime;
     bool obstacleDetected = false;
     // Read the front sensors
@@ -210,162 +213,142 @@ void loop()
    * Bluetooth communication, controls
    * 
    */
-  while (Serial2.available() > 0){
+  while (Serial2.available() > 0 || selfDrivingInProgress){
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
 
-    // Steering logic
-    if (data.startsWith("C")) {
-      int servoInput = data.substring(1).toInt();
+    if(selfDrivingInProgress){
+      Serial.println("SELF DRIVING IN PROGRESS");
+      driveTo(phoneLoc);
+    }
+    if (data.length() > 0){
+      // Steering logic
+      if (data.startsWith("C") && !selfDrivingInProgress) { 
+        int servoInput = data.substring(1).toInt();
 
-      switch (servoInput) {
-        case 3:
-          // Left
-          if (steeringLocation > -1) {
-            steeringLocation = steerLeft(false, steeringLocation);
-          }
-          break;
-        case 4:
-          // Right
-          if (steeringLocation < 1) {
-            steeringLocation = steerRight(false, steeringLocation);
-          }
-          break;
-        default:
-          Serial.println("Invalid Movement Instruction");
-          break;
+        switch (servoInput) {
+          case 3:
+            // Left
+            if (steeringLocation > -1) {
+              steeringLocation = steerLeft(false, steeringLocation);
+            }
+            break;
+          case 4:
+            // Right
+            if (steeringLocation < 1) {
+              steeringLocation = steerRight(false, steeringLocation);
+            }
+            break;
+          default:
+            Serial.println("Invalid Movement Instruction");
+            break;
+        }
       }
-    }
 
-    // Motor speed adjustment
-    else if(data.startsWith("S")){
-      // Set the new motor speed
-      motorSpeed = data.substring(1).toInt();
-      Serial.println("Motor Speed = " + String(motorSpeed));
-      // Stop the robot to reset the speed
-      motorDirectionForward = false;
-      motorDirectionReverse = false;
-      stop();
-    }
-
-    // Temperature
-    else if(data.startsWith("P")){
-      // Call the function to read temperature in Fahrenheit
-      float temperatureFahrenheit = readTemperatureFahrenheit();
-      int temperatureInteger = int(floor(temperatureFahrenheit));
-      // Print the temperature to the primary serial port (for debugging)
-      Serial.print(F("Temperature (Fahrenheit): "));
-      Serial.println(temperatureInteger);
-
-      // Send the temperature data to Phone
-      Serial2.println("T" + String(temperatureInteger));
-    }
-
-    // Steering Threshold Adjustment
-    else if(data.startsWith("T")){
-      // Set the new motor speed
-      steeringRunDuration += data.substring(1).toInt();
-      // Limit the range of steeringRunDuration to 50-300
-      steeringRunDuration = constrain(steeringRunDuration, 50, 300);
-      Serial.println("Steering Speed = " + String(steeringRunDuration));
-
-      Serial2.println(steeringRunDuration);
-      // Stop the robot to reset the steering threshold
-      motorDirectionForward = false;
-      motorDirectionReverse = false;
-      stop();
-    }
-
-    // Follow Me logic
-    else if (data.startsWith("F") || followEnabled) {
-
-      if (!followEnabled){
-        followEnabled = true;
-      }
-      // Read the ultrasonic sensor data
-      float distance = readUltrasonicSensor(trigPin, echoPin);
-      // Check if an object is within the desired follow distance
-      if (distance < FOLLOW_ME_DISTANCE) {
-        // Move the robot forward (adjust motor control functions accordingly)
-        forward(200);
-      } 
-      else if (distance < FOLLOW_ME_DISTANCE + 10) {
-        // Move the robot backward if the object is too close (within 10 cm)
-        reverse(150);
-      }
-      else {
-        // Stop the robot (object is too far or not detected)
+      // Motor speed adjustment
+      else if(data.startsWith("S") && !selfDrivingInProgress){
+        // Set the new motor speed
+        motorSpeed = data.substring(1).toInt();
+        Serial.println("Motor Speed = " + String(motorSpeed));
+        // Stop the robot to reset the speed
+        motorDirectionForward = false;
+        motorDirectionReverse = false;
         stop();
       }
-    }
 
-    // Unfollow Me logic
-    else if (data.startsWith("U")) {
-      // Stop following
-      followEnabled = false;
-      stop();
-    }
+      // Temperature
+      else if(data.startsWith("P")){
+        // Call the function to read temperature in Fahrenheit
+        float temperatureFahrenheit = readTemperatureFahrenheit();
+        int temperatureInteger = int(floor(temperatureFahrenheit));
+        // Print the temperature to the primary serial port (for debugging)
+        Serial.print(F("Temperature (Fahrenheit): "));
+        Serial.println(temperatureInteger);
 
-    // Movement Instructions
-    else if(data.startsWith("M")){
-      String instructionStr = data.substring(1); // Remove the "M" prefix
-      movementInstruction = instructionStr.toInt(); // Convert to an integer
-
-      switch (movementInstruction) {
-        case 1:
-          // Forward
-          if (!motorDirectionForward) {
-            forward(motorSpeed);
-          }
-          break;
-        case 2:
-          // Reverse
-          if (!motorDirectionReverse) {
-            reverse(motorSpeed);
-            Serial.println("Reverse");
-          }
-          break;
-        case 9:
-          // Stop
-          stop();
-          break;
-        default:
-          Serial.println("Invalid Movement Instruction");
-          break;
+        // Send the temperature data to Phone
+        Serial2.println("T" + String(temperatureInteger));
       }
-    }
-   
-    // Summon Instructions, Get the GPS coordinate from user's phone
-    else {
-      bool isSatelliteAcquired = checkSatellites();
-      int separatorIndex = data.indexOf('/');
 
-      // Split the location string into longitude and latitude
-      if (isSatelliteAcquired && separatorIndex != -1) {
-        String longitudeStr = data.substring(0, separatorIndex);
-        String latitudeStr = data.substring(separatorIndex + 1);
+      // Steering Threshold Adjustment
+      else if(data.startsWith("T")  && !selfDrivingInProgress){
+        // Set the new motor speed
+        steeringRunDuration += data.substring(1).toInt();
+        // Limit the range of steeringRunDuration to 50-300
+        steeringRunDuration = constrain(steeringRunDuration, 50, 300);
+        Serial.println("Steering Speed = " + String(steeringRunDuration));
 
-        // Convert latitude and longitude to float values
-        float newTargetLatitude = latitudeStr.toDouble();
-        float newTargetLongitude = longitudeStr.toDouble();
-
-        targetLatitude = newTargetLatitude;
-        targetLongitude = newTargetLongitude;
-
-        Location phoneLoc;
-        phoneLoc.latitude = targetLatitude;
-        phoneLoc.longitude = targetLongitude;
-
-        Serial.println("Target Longitude: " + String(targetLongitude, 8));
-        Serial.println("Target Latitude: " + String(targetLatitude, 8));
-
-        driveTo(phoneLoc, 25);
-        straightenWheel(); 
+        Serial2.println(steeringRunDuration);
+        // Stop the robot to reset the steering threshold
+        motorDirectionForward = false;
+        motorDirectionReverse = false;
         stop();
+      }
+
+      // Movement Instructions
+      else if(data.startsWith("M")){
+        String instructionStr = data.substring(1); // Remove the "M" prefix
+        movementInstruction = instructionStr.toInt(); // Convert to an integer
+
+        switch (movementInstruction) {
+          case 1:
+            // Forward
+            if (!motorDirectionForward  && !selfDrivingInProgress) {
+              forward(motorSpeed);
+            }
+            break;
+          case 2:
+            // Reverse
+            if (!motorDirectionReverse  && !selfDrivingInProgress) {
+              reverse(motorSpeed);
+              Serial.println("Reverse");
+            }
+            break;
+          case 9:
+            // Stop
+            stop();
+            if (selfDrivingInProgress){
+              selfDrivingInProgress = false;
+              globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
+            }
+
+            break;
+          default:
+            Serial.println("Invalid Movement Instruction");
+            break;
+        }
+      }
+    
+      // Summon Instructions, Get the GPS coordinate from user's phone
+      else if(data.startsWith("X")){
+        bool isSatelliteAcquired = checkSatellites();
+        String receivedCoordinates = data.substring(1);
+        int separatorIndex = receivedCoordinates.indexOf('/');
+        
+
+        // Split the location string into longitude and latitude
+        if (!selfDrivingInProgress) {
+          String longitudeStr = data.substring(0, separatorIndex);
+          String latitudeStr = data.substring(separatorIndex + 1);
+
+          // Convert latitude and longitude to float values
+          float newTargetLatitude = latitudeStr.toDouble();
+          float newTargetLongitude = longitudeStr.toDouble();
+
+          targetLatitude = newTargetLatitude;
+          targetLongitude = newTargetLongitude;
+
+          
+          phoneLoc.latitude = targetLatitude;
+          phoneLoc.longitude = targetLongitude;
+
+          Serial.println("Target Longitude: " + String(targetLongitude, 8));
+          Serial.println("Target Latitude: " + String(targetLatitude, 8));
+
+          driveTo(phoneLoc);
+          selfDrivingInProgress = true;
+        }
       }
     }
   }
-
-  
 }
 

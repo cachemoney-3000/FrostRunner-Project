@@ -49,6 +49,7 @@ struct Location {
 #define STEERING_TIME_THRESHOLD 200 // Controls how long the motor will run when steering
 #define SELF_DRIVING_FORWARD_SPEED 200
 #define SELF_DRIVING_REVERSE_SPEED 180
+#define GLOBAL_SELF_DRIVING_TIMEOUT 25 
 
 // Temperature Sensor Pins
 #define DHTPIN 50   // Digital pi
