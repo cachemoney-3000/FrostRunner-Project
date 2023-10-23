@@ -16,9 +16,8 @@ void Startup()
 bool checkSatellites() {
   checkGPS();
   int numSatellite = (int)(gps.satellites.value());
-  if (numSatellite <= 3) {
+  if (numSatellite <= 2) {
     Serial2.println("No Satellites Found");
-    return true;
     return false;
   }
   else {

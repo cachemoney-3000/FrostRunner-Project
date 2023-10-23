@@ -132,7 +132,7 @@ void loop()
    * Gradual Speed logic
    * 
    */
-  if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
+  /* if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
     if (millis() - smoothStartTime < 100) {
       //Serial.println("1");
       analogWrite(REAR_MOTOR_ENA, 150);
@@ -165,7 +165,7 @@ void loop()
         gradualSpeed = true;
       }
     }
-  }
+  } */
 
   /**
    * Object avoidance logic
