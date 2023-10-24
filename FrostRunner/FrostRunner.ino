@@ -23,7 +23,7 @@ int echoPin[NUM_ULTRASONIC_SENSORS];  // Array of echo pins
 long ultrasonic_duration, ultrasonic_cm;
 
 boolean followEnabled = false;
-const unsigned long sensorReadInterval = 1000; // Interval to read sensors (in milliseconds)
+const unsigned long sensorReadInterval = 500; // Interval to read sensors (in milliseconds)
 unsigned long lastSensorReadTime = 0; // Variable to store the last time sensors were read
 //******************************************************************************************************                                                                  
 // GPS Variables & Setup
@@ -54,7 +54,7 @@ unsigned int motorStartTime = 0;  // Variable to store the time when the steerin
 // Steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
-unsigned int steeringRunDuration = 300;  // Threshold for steering
+unsigned int steeringRunDuration = STEERING_TIME_THRESHOLD;  // Threshold for steering
 
 // Define flag variable for motor direction
 bool motorDirectionForward = false;
@@ -129,50 +129,11 @@ void loop()
   }
 
   /**
-   * Gradual Speed logic
-   * 
-   */
-  /* if ((motorDirectionForward || motorDirectionReverse) && !gradualSpeed) {
-    if (millis() - smoothStartTime < 100) {
-      //Serial.println("1");
-      analogWrite(REAR_MOTOR_ENA, 150);
-    } 
-    else if (millis() - smoothStartTime < 250) {
-      //Serial.println("2");
-      analogWrite(REAR_MOTOR_ENA, 180);
-    } 
-    if (millis() - smoothStartTime< 500) {
-      //Serial.println("3");
-      analogWrite(REAR_MOTOR_ENA, 200);
-
-      if (motorSpeed == 200) {
-        gradualSpeed = true;
-      }
-    } 
-    // Motor speed is 255
-    if (millis() - smoothStartTime > 500 && motorSpeed == 255){
-      if (millis() - smoothStartTime < 800) {
-        //Serial.println("4");
-        analogWrite(REAR_MOTOR_ENA, 200);
-      }
-      else if (millis() - smoothStartTime < 600) {
-        //Serial.println("5");
-        analogWrite(REAR_MOTOR_ENA, 225);
-      }
-      else {
-        //Serial.println("6");
-        analogWrite(REAR_MOTOR_ENA, motorSpeed);
-        gradualSpeed = true;
-      }
-    }
-  } */
-
-  /**
    * Object avoidance logic
    * 
    */
   unsigned long currentTime = millis();
-  if (!selfDrivingInProgress && motorDirectionReverse && (currentTime - lastSensorReadTime >= sensorReadInterval)) {
+  if (!selfDrivingInProgress && motorDirectionReverse) {
     lastSensorReadTime = currentTime;
     // Read the back sensor
     float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
@@ -188,7 +149,7 @@ void loop()
     }
   } 
   // Forward
-  else if (!selfDrivingInProgress && motorDirectionForward && (currentTime - lastSensorReadTime >= sensorReadInterval)) {
+  else if (!selfDrivingInProgress && motorDirectionForward) {
     lastSensorReadTime = currentTime;
     bool obstacleDetected = false;
     // Read the front sensors
