@@ -6,6 +6,7 @@
 #include <Servo.h>
 
 #include "DHT.h"
+#include <avr/wdt.h>
 
 #include "./Definitions.h"
 
@@ -113,6 +114,8 @@ void setup()
   dht.begin();
   compass.setCalibrationOffsets(967.00, 294.00, -392.00);
   compass.setCalibrationScales(0.89, 0.91, 1.28);
+
+  wdt_enable(WDTO_1S); // Initialize the watchdog timer with a 1-second timeout
 }
 
 String result = "";
@@ -183,63 +186,10 @@ void loop()
   while (Serial2.available() > 0 || selfDrivingInProgress){
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
-    // Movement Instructions
-    if(data.startsWith("M")){
-      String instructionStr = data.substring(1); // Remove the "M" prefix
-      movementInstruction = instructionStr.toInt(); // Convert to an integer
-
-      switch (movementInstruction) {
-        case 1:
-          // Forward
-          if (!motorDirectionForward  && !selfDrivingInProgress) {
-            forward(motorSpeed);
-          }
-          break;
-        case 2:
-          // Reverse
-          if (!motorDirectionReverse  && !selfDrivingInProgress) {
-            reverse(motorSpeed);
-            Serial.println("Reverse");
-          }
-          break;
-        case 9:
-          // Stop
-          stop();
-          if (selfDrivingInProgress){
-            Serial.println("Self Driving Stop");
-            selfDrivingInProgress = false;
-            globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
-          }
-
-          break;
-        default:
-          Serial.println("Invalid Movement Instruction");
-          break;
-      }
+    // Trigger a watchdog timer reset
+    if(data.startsWith("R")){
+      wdt_reset();
     }
-    // Steering logic
-    if (data.startsWith("C") && !selfDrivingInProgress) { 
-      int servoInput = data.substring(1).toInt();
-
-      switch (servoInput) {
-        case 3:
-          // Left
-          if (steeringLocation > -1) {
-            steeringLocation = steerLeft(false, steeringLocation);
-          }
-          break;
-        case 4:
-          // Right
-          if (steeringLocation < 1) {
-            steeringLocation = steerRight(false, steeringLocation);
-          }
-          break;
-        default:
-          Serial.println("Invalid Movement Instruction");
-          break;
-      }
-    }
-
     if(selfDrivingInProgress){
       Serial.println("SELF DRIVING IN PROGRESS");
       // When we are in reverse, read the back sensor
@@ -292,9 +242,65 @@ void loop()
       
       driveTo(phoneLoc);
     }
-    if (data.length() > 0){
-      
 
+    // Movement Instructions
+    if(data.startsWith("M")){
+      String instructionStr = data.substring(1); // Remove the "M" prefix
+      movementInstruction = instructionStr.toInt(); // Convert to an integer
+
+      switch (movementInstruction) {
+        case 1:
+          // Forward
+          if (!motorDirectionForward  && !selfDrivingInProgress) {
+            forward(motorSpeed);
+          }
+          break;
+        case 2:
+          // Reverse
+          if (!motorDirectionReverse  && !selfDrivingInProgress) {
+            reverse(motorSpeed);
+            Serial.println("Reverse");
+          }
+          break;
+        case 9:
+          // Stop
+          stop();
+          if (selfDrivingInProgress){
+            Serial.println("Self Driving Stop");
+            selfDrivingInProgress = false;
+            globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
+          }
+
+          break;
+        default:
+          Serial.println("Invalid Movement Instruction");
+          break;
+      }
+    }
+    // Steering logic
+    else if (data.startsWith("C") && !selfDrivingInProgress) { 
+      int servoInput = data.substring(1).toInt();
+
+      switch (servoInput) {
+        case 3:
+          // Left
+          if (steeringLocation > -1) {
+            steeringLocation = steerLeft(false, steeringLocation);
+          }
+          break;
+        case 4:
+          // Right
+          if (steeringLocation < 1) {
+            steeringLocation = steerRight(false, steeringLocation);
+          }
+          break;
+        default:
+          Serial.println("Invalid Movement Instruction");
+          break;
+      }
+    }
+
+    if (data.length() > 0){
       // Motor speed adjustment
       if(data.startsWith("S") && !selfDrivingInProgress){
         // Set the new motor speed
