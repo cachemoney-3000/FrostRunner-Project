@@ -1,77 +1,65 @@
+bool isVehicleTurning = false;
+
 // Go to the location specified by phoneLoc (latitude, longitude)
-void driveTo(struct Location &phoneLoc, int timeout) {
+void driveTo(struct Location &phoneLoc) {
   Location robotLoc = getGPS();
+  //robotLoc.latitude = 28.59108000;
+  //robotLoc.longitude = -81.46820800;
 
   if (robotLoc.latitude != 0 && robotLoc.longitude != 0) {
     float distance = geoDistance(robotLoc, phoneLoc);;
-    // Start move loop here
-    do {
-        robotLoc = getGPS();
-        Serial.println("Robot Longitude: " + String(robotLoc.longitude, 8));
-        Serial.println("Robot Latitude: " + String(robotLoc.latitude, 8));
-        
-        if (robotLoc.latitude != 0 && robotLoc.longitude != 0){
-            // TODO geoDistance
-            distance = geoDistance(robotLoc, phoneLoc);
-            // Get the heading angle in degrees
-            float heading = geoHeading();
-            float bearing = geoBearing(robotLoc, phoneLoc) - heading;
-            
-            Serial.print("Distance: ");
-            Serial.println(distance);
 
-            Serial.print("Bearing: ");
-            Serial.println(bearing);
+    robotLoc = getGPS(); // Get robot coordinates
+    //robotLoc.latitude = 28.59108000;
+    //robotLoc.longitude = -81.46820800;
 
-            Serial.print("Heading: ");
-            Serial.println(heading);
-            
-            // When we are in reverse, read the back sensor
-            if (motorDirectionReverse) {
-                // Read the back sensor
-                float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
-                // Check if the back sensor reading is below the collision threshold
-                if (distance < COLLISION_THRESHOLD) {
-                    // Call the stop function immediately
-                    stop();
-                    break; // Exit the loop early if an obstacle is detected
-                }
-            } 
-            // Forward
-            else if (motorDirectionForward) {
-                bool obstacleDetected = false;
-                // Read the front sensors
-                for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
-                    float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
-                    if (distance < COLLISION_THRESHOLD) {
-                        obstacleDetected = true;
-                        break; // Exit the loop early if an obstacle is detected
-                }
-                }
-
-                // If an obstacle is detected by any front sensor, call the stop function
-                if (obstacleDetected) {
-                    stop();
-                    break; // Exit the loop early if an obstacle is detected
-                }
-            }
-            
-            // TODO drive -> Motor controls
-            drive(distance, bearing);
-            //Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
-
-            timeout -= 1;
+    Serial.println("Robot Longitude: " + String(robotLoc.longitude, 8));
+    Serial.println("Robot Latitude: " + String(robotLoc.latitude, 8));
+    
+    if (robotLoc.latitude != 0 && robotLoc.longitude != 0){
+        if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
+            Serial.println("Release in GPS");
+            steeringRelease();  // Stop the motor
+            steeringReleased = true;  // Set the steeringReleased flag to true
         }
-        
-    } while (distance > 1.0 && timeout > 0);
 
-    stop();
+        // TODO geoDistance
+        distance = geoDistance(robotLoc, phoneLoc);
+        // Get the heading angle in degrees
+        float heading = geoHeading();
+        float bearing = geoBearing(robotLoc, phoneLoc) - heading;
+        
+        /* Serial.print("Distance: ");
+        Serial.println(distance);
+
+        Serial.print("Bearing: ");
+        Serial.println(bearing);
+
+        Serial.print("Heading: ");
+        Serial.println(heading); */
+        
+        // TODO drive -> Motor controls
+        drive(distance, bearing);
+        //Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
+
+        globalTimeout -= 1;
+
+        if ((distance > 1000.0 && distance < 1.0) || globalTimeout == 0){
+            Serial.println("Self Driving: TIMEOUT");
+            stop();
+            straightenWheel(); 
+            selfDrivingInProgress = false;
+            globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
+        }
+
+    }
+
   }
 }
 
 void drive(float distance, float bearing) {
     float bearingTolerance = 10.0;   // Define a tolerance of 10 degrees for heading
-    float distanceTolerance = 2.0;  // Define a tolerance of 2 meters for distance
+    float distanceTolerance = 1.0;  // Define a tolerance of 1 meters for distance
 
     // Ensure the heading difference is within the range of -180 to 180 degrees
     if (bearing > 180.0) {
@@ -85,36 +73,47 @@ void drive(float distance, float bearing) {
         if (bearing > 0) {
             // Turn right (clockwise)
             if (steeringLocation < 1) {
-                Serial.println("Right");
-                steerRight(false);
-                straightenWheel(); 
+                Serial.println("Self Driving: Turn Right");
+                steeringLocation = steerRight(false, steeringLocation);
             }
         } 
         else {
             // Turn left (counterclockwise)
             if (steeringLocation > -1) {
-                Serial.println("Left");
-                steerLeft(false);
-                straightenWheel(); 
+                Serial.println("Self Driving: Turn Left");
+                steeringLocation = steerLeft(false, steeringLocation);
             }
         }
+        
+        forward(SELF_DRIVING_FORWARD_SPEED - 20);  // Adjust the speed as needed
+        isVehicleTurning = true;
     } 
     else {
+        Serial.println("Self Driving: Stop Turning");
         straightenWheel(); 
+        stop();
+        isVehicleTurning = false;
     }
 
-    // Move forward or backward based on distance
-    if (distance > distanceTolerance) {
-        Serial.println("Forward");
-        forward(SELF_DRIVING_FORWARD_SPEED);  // Adjust the speed as needed
-    } 
-    else if (distance < -distanceTolerance) {
-        Serial.println("Reverse");
-        reverse(SELF_DRIVING_REVERSE_SPEED - 50);  // Adjust the speed as needed
-    } 
-    else {
-        Serial.println("Stop");
-        stop();
+    // Move forward and reverse
+    if (!isVehicleTurning) {
+        // Move forward or backward based on distance
+        if (distance > distanceTolerance) {
+            Serial.println("Self Driving: Forward");
+            forward(SELF_DRIVING_FORWARD_SPEED);  // Adjust the speed as needed
+            forwardReverseStartTime = millis();
+            haltReleased = false;
+        } 
+        else if (distance < -distanceTolerance) {
+            Serial.println("Self Driving: Reverse");
+            reverse(SELF_DRIVING_REVERSE_SPEED);  // Adjust the speed as needed
+            forwardReverseStartTime = millis();
+            haltReleased = false;
+        } 
+        else {
+            Serial.println("Self Driving: Destination Reached");
+            stop();
+        }
     }
 }
 
@@ -142,7 +141,6 @@ float geoBearing(struct Location &robotLoc, struct Location &phoneLoc) {
     if (bearing < 0) {
         bearing += 360.0;
     }
-    
     return bearing;
 }
 

@@ -1,9 +1,6 @@
 // Function to read temperature in Fahrenheit
 float readTemperatureFahrenheit() {
   // Reading temperature or humidity takes about 250 milliseconds.
-  // Sensor readings may also be up to 2 seconds 'old' (it's a slow sensor)
-  delay(2000);
-
   // Read temperature as Fahrenheit
   float f = dht.readTemperature(true);
 
@@ -18,7 +15,7 @@ float readTemperatureFahrenheit() {
 
 float readUltrasonicSensor(int trigPin, int echoPin) {
   digitalWrite(trigPin, LOW);
-  delayMicroseconds(5);
+  delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);

@@ -1,7 +1,7 @@
 
-void steerLeft(boolean stop){
+int steerLeft(boolean stop, int steerLocation){
   // Left
-  steeringLocation--;
+  steerLocation--;
 
   digitalWrite(STEERING_MOTOR_IN3, HIGH);
   digitalWrite(STEERING_MOTOR_IN4, LOW);
@@ -12,7 +12,7 @@ void steerLeft(boolean stop){
 
   if(stop){
     Serial.print("steeringLocation before: ");
-    Serial.println(steeringLocation);
+    Serial.println(steerLocation);
     steeringRunDuration = 120;
     Serial.println("steeringRunDuration");
     Serial.println(steeringRunDuration);
@@ -22,12 +22,14 @@ void steerLeft(boolean stop){
   }
 
   Serial.println("SteerLocation");
-  Serial.println(steeringLocation);
+  Serial.println(steerLocation);
+
+  return steerLocation;
 }
 
-void steerRight(boolean stop) {
+int steerRight(boolean stop, int steerLocation) {
    // Right
-  steeringLocation++;
+  steerLocation++;
   
   digitalWrite(STEERING_MOTOR_IN3, LOW);
   digitalWrite(STEERING_MOTOR_IN4, HIGH);
@@ -37,8 +39,8 @@ void steerRight(boolean stop) {
   steeringReleased = false;
 
   if(stop){
-    Serial.print("steeringLocation before: ");
-    Serial.println(steeringLocation);
+    Serial.print("steerLocation before: ");
+    Serial.println(steerLocation);
     steeringRunDuration = 180;
     Serial.println("steeringRunDuration");
     Serial.println(steeringRunDuration);
@@ -48,7 +50,9 @@ void steerRight(boolean stop) {
   }
 
   Serial.println("SteerLocation");
-  Serial.println(steeringLocation);
+  Serial.println(steerLocation);
+
+  return steerLocation;
 }
 
 void forward(int speed) {
@@ -66,8 +70,8 @@ void forward(int speed) {
 
 void reverse(int speed) {
   // Start time
-  smoothStartTime = millis();
-  gradualSpeed = false;
+  //smoothStartTime = millis();
+  //gradualSpeed = false;
   // Backward
   digitalWrite(REAR_MOTOR_IN1, LOW);
   digitalWrite(REAR_MOTOR_IN2, HIGH);
@@ -80,11 +84,11 @@ void reverse(int speed) {
 void straightenWheel() {
   // Straighten the wheels
   if (steeringLocation > 0) {
-    steerLeft(true);
+    steeringLocation = steerLeft(true, steeringLocation);
     steeringLocation = 0;
   }
   if (steeringLocation < 0) {
-    steerRight(true);
+    steeringLocation = steerRight(true, steeringLocation);
     steeringLocation = 0;
   }
 }
@@ -105,4 +109,15 @@ void stop() {
 void steeringRelease() {
   digitalWrite(STEERING_MOTOR_IN3,LOW);
   digitalWrite(STEERING_MOTOR_IN4,LOW);
+}
+
+void halt() {
+  gradualSpeed = false;
+  digitalWrite(REAR_MOTOR_IN1,LOW);
+  digitalWrite(REAR_MOTOR_IN2,LOW);
+
+  Serial.println("Halt");
+
+  motorDirectionForward = false;
+  motorDirectionReverse = false;
 }

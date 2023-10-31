@@ -34,7 +34,7 @@ struct Location {
 #define ECHO_PIN_BACK 2
 
 #define NUM_ULTRASONIC_SENSORS 3
-#define COLLISION_THRESHOLD 20.0f // 10.0 cm, can be change
+#define COLLISION_THRESHOLD 70.0f // 30.0 cm, can be change
 
 #define FOLLOW_ME_DISTANCE 15.0f // 20.0 cm, can be change
 
@@ -46,9 +46,12 @@ struct Location {
 #define STEERING_MOTOR_IN4 11
 #define STEERING_MOTOR_ENB 13
 
-#define STEERING_TIME_THRESHOLD 200 // Controls how long the motor will run when steering
-#define SELF_DRIVING_FORWARD_SPEED 100
-#define SELF_DRIVING_REVERSE_SPEED 50
+#define STEERING_TIME_THRESHOLD 250 // Controls how long the motor will run when steering
+#define SELF_DRIVING_FORWARD_SPEED 200
+#define SELF_DRIVING_REVERSE_SPEED 200
+#define GLOBAL_SELF_DRIVING_TIMEOUT 15 
+#define DISTANCE_TOLERANCE 15.0
+#define BEARING_TOLERANCE 5.0
 
 // Temperature Sensor Pins
 #define DHTPIN 50   // Digital pi
