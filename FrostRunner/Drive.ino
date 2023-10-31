@@ -1,5 +1,3 @@
-bool isVehicleTurning = false;
-
 // Go to the location specified by phoneLoc (latitude, longitude)
 void driveTo(struct Location &phoneLoc) {
   Location robotLoc = getGPS();
@@ -68,6 +66,7 @@ void drive(float distance, float bearing) {
         bearing += 360.0;
     }
 
+    // TODO
     // Turning the vehicle
     if (fabs(bearing) > bearingTolerance) {
         if (bearing > 0) {
@@ -101,14 +100,10 @@ void drive(float distance, float bearing) {
         if (distance > distanceTolerance) {
             Serial.println("Self Driving: Forward");
             forward(SELF_DRIVING_FORWARD_SPEED);  // Adjust the speed as needed
-            forwardReverseStartTime = millis();
-            haltReleased = false;
         } 
         else if (distance < -distanceTolerance) {
             Serial.println("Self Driving: Reverse");
             reverse(SELF_DRIVING_REVERSE_SPEED);  // Adjust the speed as needed
-            forwardReverseStartTime = millis();
-            haltReleased = false;
         } 
         else {
             Serial.println("Self Driving: Destination Reached");
@@ -171,4 +166,46 @@ float geoHeading() {
     while (headingDegrees >  180) headingDegrees -= 360;
 
     return headingDegrees;
+}
+
+void checkForObstacle() {
+    if (motorDirectionReverse) {
+          // Read the back sensor
+          float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
+          // Check if the back sensor reading is below the collision threshold
+          if (distance < COLLISION_THRESHOLD) {
+              // Call the stop function immediately
+              stop();
+              selfDrivingInProgress = false;
+              Serial2.println("Obstacle Detected!");
+              Serial.println("Obstacle Detected!");
+              return; // Exit the loop early if an obstacle is detected
+          }
+      } 
+      // Forward
+      else if (motorDirectionForward) {
+          bool obstacleDetected = false;
+          int ultrasensorTriggered = -1;
+          // Read the front sensors
+          // 0 = TRIG_PIN_FRONT_RIGHT
+          // 1 = TRIG_PIN_FRONT_LEFT
+          for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
+              float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
+              
+              if (distance < COLLISION_THRESHOLD) {
+                  ultrasensorTriggered = i;
+                  obstacleDetected = true;
+                  break; // Exit the loop early if an obstacle is detected
+              }
+          }
+
+          // If an obstacle is detected by any front sensor, call the stop function
+          if (obstacleDetected) {
+              stop();
+              selfDrivingInProgress = false;
+              Serial2.println("Obstacle Detected!");
+              Serial.println("Obstacle Detected!");
+              return; // Exit the loop early if an obstacle is detected
+          }
+      }
 }

@@ -62,11 +62,7 @@ bool motorDirectionForward = false;
 bool motorDirectionReverse = false;
 
 // Self Driving
-unsigned int forwardReverseStartTime = 0;
-bool haltReleased = true;
-
-bool gradualSpeed = false;
-unsigned int smoothStartTime = 0;
+bool isVehicleTurning = false;
 
 void setup()
 {
@@ -121,6 +117,7 @@ void setup()
 String result = "";
 void loop()
 {
+  wdt_reset(); // Prevent the reset
   /**
    * Steering release
    * Check if it's time to stop the steering motor
@@ -188,52 +185,27 @@ void loop()
     Serial.println(data);
     // Trigger a watchdog timer reset
     if(data.startsWith("R")){
-      wdt_reset();
+      stop();
+      straightenWheel();
+      delay(2000); // Force a reset
     }
     if(selfDrivingInProgress){
       Serial.println("SELF DRIVING IN PROGRESS");
-      // When we are in reverse, read the back sensor
-      if (motorDirectionReverse) {
-          // Read the back sensor
-          float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
-          // Check if the back sensor reading is below the collision threshold
-          if (distance < COLLISION_THRESHOLD) {
-              // Call the stop function immediately
-              stop();
-              selfDrivingInProgress = false;
-              Serial2.println("Obstacle Detected!");
-              Serial.println("Obstacle Detected!");
-              break; // Exit the loop early if an obstacle is detected
-          }
-      } 
-      // Forward
-      else if (motorDirectionForward) {
-          bool obstacleDetected = false;
-          int ultrasensorTriggered = -1;
-          // Read the front sensors
-          // 0 = TRIG_PIN_FRONT_RIGHT
-          // 1 = TRIG_PIN_FRONT_LEFT
-          for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
-              float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
-              
-              if (distance < COLLISION_THRESHOLD) {
-                  ultrasensorTriggered = i;
-                  obstacleDetected = true;
-                  break; // Exit the loop early if an obstacle is detected
-              }
-          }
 
-          // If an obstacle is detected by any front sensor, call the stop function
-          if (obstacleDetected) {
-              stop();
-              selfDrivingInProgress = false;
-              Serial2.println("Obstacle Detected!");
-              Serial.println("Obstacle Detected!");
-              break; // Exit the loop early if an obstacle is detected
-          }
-      }
+      checkForObstacle();
       
       driveTo(phoneLoc);
+      
+      
+      // Wait for the specified delay time to elapse
+      if (isVehicleTurning) {
+        // Adding a delay every instruction
+        unsigned long startTime = millis();
+        unsigned long delayTime = 1500; // TODO
+        do {
+          checkForObstacle();
+        } while (millis() - startTime < delayTime);
+      }
     }
 
     // Movement Instructions
