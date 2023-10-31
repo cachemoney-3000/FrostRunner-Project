@@ -34,7 +34,7 @@ struct Location {
 #define ECHO_PIN_BACK 2
 
 #define NUM_ULTRASONIC_SENSORS 3
-#define COLLISION_THRESHOLD 30.0f // 30.0 cm, can be change
+#define COLLISION_THRESHOLD 70.0f // 30.0 cm, can be change
 
 #define FOLLOW_ME_DISTANCE 15.0f // 20.0 cm, can be change
 

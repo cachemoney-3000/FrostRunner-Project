@@ -126,7 +126,7 @@ void loop()
    * Check if it's time to stop the steering motor
   */
   if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
-    Serial.println("Release");
+    //Serial.println("Release");
     steeringRelease();  // Stop the motor
     steeringReleased = true;  // Set the steeringReleased flag to true
   }
@@ -140,9 +140,9 @@ void loop()
     lastSensorReadTime = currentTime;
     // Read the back sensor
     float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
-    Serial.print("Back Sensor: ");
+    /* Serial.print("Back Sensor: ");
     Serial.print(distance);
-    Serial.println(" ultrasonic_cm");
+    Serial.println(" ultrasonic_cm"); */
 
     // Check if the back sensor reading is below the collision threshold
     if (distance < COLLISION_THRESHOLD) {
@@ -158,11 +158,11 @@ void loop()
     // Read the front sensors
     for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
       float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
-      Serial.print("Front Sensor ");
+      /* Serial.print("Front Sensor ");
       Serial.print(i + 1);
       Serial.print(": ");
       Serial.print(distance);
-      Serial.println(" ultrasonic_cm");
+      Serial.println(" ultrasonic_cm"); */
 
       if (distance < COLLISION_THRESHOLD) {
         Serial.print("Collision detected at");
@@ -225,13 +225,6 @@ void loop()
 
           // If an obstacle is detected by any front sensor, call the stop function
           if (obstacleDetected) {
-              if(ultrasensorTriggered == 0) { // Right
-                  //steeringLocation = steerLeft(false, steeringLocation);
-                  Serial.println("Obstacle Detected: Try Left");
-              } else if(ultrasensorTriggered == 1) { // Left
-                  //steeringLocation = steerRight(false, steeringLocation);
-                  Serial.println("Obstacle Detected: : Try Right");
-              }
               stop();
               selfDrivingInProgress = false;
               Serial2.println("Obstacle Detected!");
@@ -259,21 +252,18 @@ void loop()
           // Reverse
           if (!motorDirectionReverse  && !selfDrivingInProgress) {
             reverse(motorSpeed);
-            Serial.println("Reverse");
           }
           break;
         case 9:
           // Stop
           stop();
           if (selfDrivingInProgress){
-            Serial.println("Self Driving Stop");
             selfDrivingInProgress = false;
             globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
           }
 
           break;
         default:
-          Serial.println("Invalid Movement Instruction");
           break;
       }
     }
@@ -295,7 +285,6 @@ void loop()
           }
           break;
         default:
-          Serial.println("Invalid Movement Instruction");
           break;
       }
     }

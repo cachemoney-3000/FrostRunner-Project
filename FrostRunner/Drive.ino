@@ -1,3 +1,5 @@
+bool isVehicleTurning = false;
+
 // Go to the location specified by phoneLoc (latitude, longitude)
 void driveTo(struct Location &phoneLoc) {
   Location robotLoc = getGPS();
@@ -27,16 +29,14 @@ void driveTo(struct Location &phoneLoc) {
         float heading = geoHeading();
         float bearing = geoBearing(robotLoc, phoneLoc) - heading;
         
-        Serial.print("Distance: ");
+        /* Serial.print("Distance: ");
         Serial.println(distance);
 
         Serial.print("Bearing: ");
         Serial.println(bearing);
 
         Serial.print("Heading: ");
-        Serial.println(heading);
-        
-        
+        Serial.println(heading); */
         
         // TODO drive -> Motor controls
         drive(distance, bearing);
@@ -45,7 +45,7 @@ void driveTo(struct Location &phoneLoc) {
         globalTimeout -= 1;
 
         if ((distance > 1000.0 && distance < 1.0) || globalTimeout == 0){
-            Serial.println("TIMEOUT");
+            Serial.println("Self Driving: TIMEOUT");
             stop();
             straightenWheel(); 
             selfDrivingInProgress = false;
@@ -59,7 +59,7 @@ void driveTo(struct Location &phoneLoc) {
 
 void drive(float distance, float bearing) {
     float bearingTolerance = 10.0;   // Define a tolerance of 10 degrees for heading
-    float distanceTolerance = 2.0;  // Define a tolerance of 2 meters for distance
+    float distanceTolerance = 1.0;  // Define a tolerance of 1 meters for distance
 
     // Ensure the heading difference is within the range of -180 to 180 degrees
     if (bearing > 180.0) {
@@ -73,38 +73,47 @@ void drive(float distance, float bearing) {
         if (bearing > 0) {
             // Turn right (clockwise)
             if (steeringLocation < 1) {
-                Serial.println("Right");
+                Serial.println("Self Driving: Turn Right");
                 steeringLocation = steerRight(false, steeringLocation);
             }
         } 
         else {
             // Turn left (counterclockwise)
             if (steeringLocation > -1) {
-                Serial.println("Left");
+                Serial.println("Self Driving: Turn Left");
                 steeringLocation = steerLeft(false, steeringLocation);
             }
         }
+        
+        forward(SELF_DRIVING_FORWARD_SPEED - 20);  // Adjust the speed as needed
+        isVehicleTurning = true;
     } 
     else {
+        Serial.println("Self Driving: Stop Turning");
         straightenWheel(); 
+        stop();
+        isVehicleTurning = false;
     }
 
-    // Move forward or backward based on distance
-    if (distance > distanceTolerance) {
-        Serial.println("Forward");
-        forward(SELF_DRIVING_FORWARD_SPEED);  // Adjust the speed as needed
-        forwardReverseStartTime = millis();
-        haltReleased = false;
-    } 
-    else if (distance < -distanceTolerance) {
-        Serial.println("Reverse");
-        reverse(SELF_DRIVING_REVERSE_SPEED);  // Adjust the speed as needed
-        forwardReverseStartTime = millis();
-        haltReleased = false;
-    } 
-    else {
-        Serial.println("Stop");
-        stop();
+    // Move forward and reverse
+    if (!isVehicleTurning) {
+        // Move forward or backward based on distance
+        if (distance > distanceTolerance) {
+            Serial.println("Self Driving: Forward");
+            forward(SELF_DRIVING_FORWARD_SPEED);  // Adjust the speed as needed
+            forwardReverseStartTime = millis();
+            haltReleased = false;
+        } 
+        else if (distance < -distanceTolerance) {
+            Serial.println("Self Driving: Reverse");
+            reverse(SELF_DRIVING_REVERSE_SPEED);  // Adjust the speed as needed
+            forwardReverseStartTime = millis();
+            haltReleased = false;
+        } 
+        else {
+            Serial.println("Self Driving: Destination Reached");
+            stop();
+        }
     }
 }
 
