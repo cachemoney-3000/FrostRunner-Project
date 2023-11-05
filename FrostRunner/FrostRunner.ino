@@ -189,23 +189,11 @@ void loop()
       straightenWheel();
       delay(2000); // Force a reset
     }
+    
     if(selfDrivingInProgress){
       Serial.println("SELF DRIVING IN PROGRESS");
-
       checkForObstacle();
-      
       driveTo(phoneLoc);
-      
-      
-      // Wait for the specified delay time to elapse
-      if (isVehicleTurning) {
-        // Adding a delay every instruction
-        unsigned long startTime = millis();
-        unsigned long delayTime = 1500; // TODO
-        do {
-          checkForObstacle();
-        } while (millis() - startTime < delayTime);
-      }
     }
 
     // Movement Instructions

@@ -5,8 +5,7 @@ void driveTo(struct Location &phoneLoc) {
   //robotLoc.longitude = -81.46820800;
 
   if (robotLoc.latitude != 0 && robotLoc.longitude != 0) {
-    float distance = geoDistance(robotLoc, phoneLoc);;
-
+    float distance = gps.distanceBetween(phoneLoc.latitude, phoneLoc.longitude, robotLoc.latitude, robotLoc.longitude);
     robotLoc = getGPS(); // Get robot coordinates
     //robotLoc.latitude = 28.59108000;
     //robotLoc.longitude = -81.46820800;
@@ -105,6 +104,7 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
     // Add a 1.5 delay timer
     while (currentTime - startTime < delayTime) {
       currentTime = millis(); // Update the current time
+      checkForObstacle();
     }
 
     Serial.println("Delay done");
@@ -130,20 +130,6 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
             globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
       }
   }
-}
-
-float geoDistance(struct Location &robotLoc, struct Location &phoneLoc){
-    const float R = 6371000; // radius of earth in metres
-    float p1 = robotLoc.latitude * DEGTORAD;
-    float p2 = phoneLoc.latitude * DEGTORAD;
-    float dp = (phoneLoc.latitude - robotLoc.latitude) * DEGTORAD;
-    float dl = (phoneLoc.longitude - robotLoc.longitude) * DEGTORAD;
-
-    float x = sin(dp/2) * sin(dp/2) + cos(p1) * cos(p2) * sin(dl/2) * sin(dl/2);
-    float y = 2 * atan2(sqrt(x), sqrt(1-x));
-
-    // returns distance in meters
-    return R * y;
 }
 
 void checkForObstacle() {
