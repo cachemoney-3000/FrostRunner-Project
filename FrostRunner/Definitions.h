@@ -53,8 +53,11 @@ struct Location {
 #define DISTANCE_TOLERANCE 50.0
 #define BEARING_TOLERANCE 5.0
 
+// Self Driving
 #define SELF_DRIVING_STEERING_DELAY 1500 // ms delay
-#define GPS_FILTER_WEIGHT 0.2f
+#define GPS_FILTER_WEIGHT 0.2f  // Filter weight (high = noisy, low = stable)
+#define SELF_DRIVING_HEADING_TOLERANCE 30 // degrees
+#define SELF_DRIVING_DISTANCE_TOLERANCE 1.0f // cm
 
 // Temperature Sensor Pins
 #define DHTPIN 50   // Digital pi

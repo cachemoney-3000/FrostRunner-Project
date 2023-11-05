@@ -75,7 +75,7 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
   }
 
   // Check if you are facing the correct direction
-  if (azimuthDifference <= headingTolerance || azimuthDifference >= 360 - headingTolerance) {
+  if (azimuthDifference <= SELF_DRIVING_HEADING_TOLERANCE || azimuthDifference >= 360 - SELF_DRIVING_HEADING_TOLERANCE) {
     stop();
 
     Serial.println("Facing the correct direction: " + String(azimuthDifference));
@@ -114,20 +114,16 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
   // Move forward and reverse
   if (!isVehicleTurning) {
       // Move forward or backward based on distance
-      if (distance > distanceTolerance) {
+      if (distance > SELF_DRIVING_DISTANCE_TOLERANCE) {
           Serial.println("Self Driving: Forward");
           forward(SELF_DRIVING_FORWARD_SPEED);
-      } 
-      else if (distance < -distanceTolerance) {
-          Serial.println("Self Driving: Reverse");
-          reverse(SELF_DRIVING_FORWARD_SPEED);
-      } 
+      }
       else {
           Serial.println("Self Driving: Destination Reached");
           stop();
           selfDrivingInProgress = false;
-            isVehicleTurning = false;
-            globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
+          isVehicleTurning = false;
+          globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
       }
   }
 }

@@ -28,15 +28,10 @@ const unsigned long sensorReadInterval = 500; // Interval to read sensors (in mi
 unsigned long lastSensorReadTime = 0; // Variable to store the last time sensors were read
 //******************************************************************************************************                                                                  
 // GPS Variables & Setup
-int GPS_Course;       // variable to hold the gps's determined course to destination
 int Number_of_SATS;   // variable to hold the number of satellites acquired
 TinyGPSPlus gps;      // gps = instance of TinyGPS
 
-bool arrived = false;
-    
-String location="";
-float targetLatitude = 0; // = 28.59108000;
-float targetLongitude = 0; // = -81.46820800;
+// Self Driving Variables
 int movementInstruction = 0;
 bool selfDrivingInProgress = false;
 int globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
@@ -189,7 +184,7 @@ void loop()
       straightenWheel();
       delay(2000); // Force a reset
     }
-    
+
     if(selfDrivingInProgress){
       Serial.println("SELF DRIVING IN PROGRESS");
       checkForObstacle();
@@ -304,13 +299,9 @@ void loop()
           // Convert latitude and longitude to float values
           float newTargetLatitude = latitudeStr.toDouble();
           float newTargetLongitude = longitudeStr.toDouble();
-
-          targetLatitude = newTargetLatitude;
-          targetLongitude = newTargetLongitude;
-
           
-          phoneLoc.latitude = targetLatitude;
-          phoneLoc.longitude = targetLongitude;
+          phoneLoc.latitude = newTargetLatitude;
+          phoneLoc.longitude = newTargetLongitude;
 
           // Apply smoothing to try to increase the precision of the coordinates
           phoneLoc = applyMovingAverageFilter(phoneLoc);
