@@ -71,7 +71,7 @@ void setup()
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
-  //Startup();  // Startup procedure
+  //Startup();  // Startup GPS Procedure
 
   // Rear Motors
   pinMode(REAR_MOTOR_IN1, OUTPUT);
@@ -103,8 +103,6 @@ void setup()
 
   // Temperature
   dht.begin();
-  compass.setCalibrationOffsets(967.00, 294.00, -392.00);
-  compass.setCalibrationScales(0.89, 0.91, 1.28);
 
   wdt_enable(WDTO_1S); // Initialize the watchdog timer with a 1-second timeout
 }
