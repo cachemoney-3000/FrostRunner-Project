@@ -4,11 +4,10 @@ void driveTo(struct Location &phoneLoc) {
   //robotLoc.latitude = 28.59108000;
   //robotLoc.longitude = -81.46820800;
 
+  // Apply smoothing to try to increase the precision of the coordinates
+  robotLoc = applyMovingAverageFilter(robotLoc);
   if (robotLoc.latitude != 0 && robotLoc.longitude != 0) {
     float distance = gps.distanceBetween(phoneLoc.latitude, phoneLoc.longitude, robotLoc.latitude, robotLoc.longitude);
-    robotLoc = getGPS(); // Get robot coordinates
-    //robotLoc.latitude = 28.59108000;
-    //robotLoc.longitude = -81.46820800;
 
     /** Calculate the azimuths */
     byte locationAzimuth = calculateAzimuth(robotLoc, phoneLoc);
