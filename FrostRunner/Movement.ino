@@ -56,9 +56,6 @@ int steerRight(boolean stop, int steerLocation) {
 }
 
 void forward(int speed) {
-  // Start time
-  smoothStartTime = millis();
-  gradualSpeed = false;
   // Forward
   digitalWrite(REAR_MOTOR_IN1, HIGH);
   digitalWrite(REAR_MOTOR_IN2, LOW);
@@ -69,9 +66,6 @@ void forward(int speed) {
 }
 
 void reverse(int speed) {
-  // Start time
-  //smoothStartTime = millis();
-  //gradualSpeed = false;
   // Backward
   digitalWrite(REAR_MOTOR_IN1, LOW);
   digitalWrite(REAR_MOTOR_IN2, HIGH);
@@ -94,7 +88,6 @@ void straightenWheel() {
 }
 
 void stop() {
-  gradualSpeed = false;
   digitalWrite(REAR_MOTOR_IN1,LOW);
   digitalWrite(REAR_MOTOR_IN2,LOW);
   
@@ -109,15 +102,4 @@ void stop() {
 void steeringRelease() {
   digitalWrite(STEERING_MOTOR_IN3,LOW);
   digitalWrite(STEERING_MOTOR_IN4,LOW);
-}
-
-void halt() {
-  gradualSpeed = false;
-  digitalWrite(REAR_MOTOR_IN1,LOW);
-  digitalWrite(REAR_MOTOR_IN2,LOW);
-
-  Serial.println("Halt");
-
-  motorDirectionForward = false;
-  motorDirectionReverse = false;
 }

@@ -35,3 +35,10 @@ Location getGPS() {
   return robotLoc;
 }
 
+Location applyMovingAverageFilter(struct Location &newLocation) {
+  newLocation.latitude = (1 - GPS_FILTER_WEIGHT) * newLocation.latitude + GPS_FILTER_WEIGHT * newLocation.latitude;
+  newLocation.longitude = (1 - GPS_FILTER_WEIGHT) * newLocation.longitude + GPS_FILTER_WEIGHT * newLocation.longitude;
+  
+  return newLocation;
+}
+

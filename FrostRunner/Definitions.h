@@ -34,9 +34,9 @@ struct Location {
 #define ECHO_PIN_BACK 2
 
 #define NUM_ULTRASONIC_SENSORS 3
-#define COLLISION_THRESHOLD 70.0f // 30.0 cm, can be change
+#define COLLISION_THRESHOLD 70.0f // CM
 
-#define FOLLOW_ME_DISTANCE 15.0f // 20.0 cm, can be change
+#define FOLLOW_ME_DISTANCE 15.0f
 
 // Motors Pins
 #define REAR_MOTOR_IN1 9
@@ -50,8 +50,14 @@ struct Location {
 #define SELF_DRIVING_FORWARD_SPEED 200
 #define SELF_DRIVING_REVERSE_SPEED 200
 #define GLOBAL_SELF_DRIVING_TIMEOUT 15 
-#define DISTANCE_TOLERANCE 15.0
+#define DISTANCE_TOLERANCE 50.0
 #define BEARING_TOLERANCE 5.0
+
+// Self Driving
+#define SELF_DRIVING_STEERING_DELAY 1500 // ms delay
+#define GPS_FILTER_WEIGHT 0.2f  // Filter weight (high = noisy, low = stable)
+#define SELF_DRIVING_HEADING_TOLERANCE 30 // degrees
+#define SELF_DRIVING_DISTANCE_TOLERANCE 1.0f // cm
 
 // Temperature Sensor Pins
 #define DHTPIN 50   // Digital pi

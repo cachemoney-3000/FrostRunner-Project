@@ -28,15 +28,10 @@ const unsigned long sensorReadInterval = 500; // Interval to read sensors (in mi
 unsigned long lastSensorReadTime = 0; // Variable to store the last time sensors were read
 //******************************************************************************************************                                                                  
 // GPS Variables & Setup
-int GPS_Course;       // variable to hold the gps's determined course to destination
 int Number_of_SATS;   // variable to hold the number of satellites acquired
 TinyGPSPlus gps;      // gps = instance of TinyGPS
 
-bool arrived = false;
-    
-String location="";
-float targetLatitude = 0; // = 28.59108000;
-float targetLongitude = 0; // = -81.46820800;
+// Self Driving Variables
 int movementInstruction = 0;
 bool selfDrivingInProgress = false;
 int globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
@@ -62,11 +57,7 @@ bool motorDirectionForward = false;
 bool motorDirectionReverse = false;
 
 // Self Driving
-unsigned int forwardReverseStartTime = 0;
-bool haltReleased = true;
-
-bool gradualSpeed = false;
-unsigned int smoothStartTime = 0;
+bool isVehicleTurning = false;
 
 void setup()
 {
@@ -80,7 +71,7 @@ void setup()
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
-  //Startup();  // Startup procedure
+  //Startup();  // Startup GPS Procedure
 
   // Rear Motors
   pinMode(REAR_MOTOR_IN1, OUTPUT);
@@ -112,8 +103,6 @@ void setup()
 
   // Temperature
   dht.begin();
-  compass.setCalibrationOffsets(967.00, 294.00, -392.00);
-  compass.setCalibrationScales(0.89, 0.91, 1.28);
 
   wdt_enable(WDTO_1S); // Initialize the watchdog timer with a 1-second timeout
 }
@@ -121,6 +110,7 @@ void setup()
 String result = "";
 void loop()
 {
+  wdt_reset(); // Prevent the reset
   /**
    * Steering release
    * Check if it's time to stop the steering motor
@@ -188,51 +178,14 @@ void loop()
     Serial.println(data);
     // Trigger a watchdog timer reset
     if(data.startsWith("R")){
-      wdt_reset();
+      stop();
+      straightenWheel();
+      delay(2000); // Force a reset
     }
+
     if(selfDrivingInProgress){
       Serial.println("SELF DRIVING IN PROGRESS");
-      // When we are in reverse, read the back sensor
-      if (motorDirectionReverse) {
-          // Read the back sensor
-          float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
-          // Check if the back sensor reading is below the collision threshold
-          if (distance < COLLISION_THRESHOLD) {
-              // Call the stop function immediately
-              stop();
-              selfDrivingInProgress = false;
-              Serial2.println("Obstacle Detected!");
-              Serial.println("Obstacle Detected!");
-              break; // Exit the loop early if an obstacle is detected
-          }
-      } 
-      // Forward
-      else if (motorDirectionForward) {
-          bool obstacleDetected = false;
-          int ultrasensorTriggered = -1;
-          // Read the front sensors
-          // 0 = TRIG_PIN_FRONT_RIGHT
-          // 1 = TRIG_PIN_FRONT_LEFT
-          for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
-              float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
-              
-              if (distance < COLLISION_THRESHOLD) {
-                  ultrasensorTriggered = i;
-                  obstacleDetected = true;
-                  break; // Exit the loop early if an obstacle is detected
-              }
-          }
-
-          // If an obstacle is detected by any front sensor, call the stop function
-          if (obstacleDetected) {
-              stop();
-              selfDrivingInProgress = false;
-              Serial2.println("Obstacle Detected!");
-              Serial.println("Obstacle Detected!");
-              break; // Exit the loop early if an obstacle is detected
-          }
-      }
-      
+      checkForObstacle();
       driveTo(phoneLoc);
     }
 
@@ -344,16 +297,15 @@ void loop()
           // Convert latitude and longitude to float values
           float newTargetLatitude = latitudeStr.toDouble();
           float newTargetLongitude = longitudeStr.toDouble();
-
-          targetLatitude = newTargetLatitude;
-          targetLongitude = newTargetLongitude;
-
           
-          phoneLoc.latitude = targetLatitude;
-          phoneLoc.longitude = targetLongitude;
+          phoneLoc.latitude = newTargetLatitude;
+          phoneLoc.longitude = newTargetLongitude;
 
-          Serial.println("Target Longitude: " + String(targetLongitude, 8));
-          Serial.println("Target Latitude: " + String(targetLatitude, 8));
+          // Apply smoothing to try to increase the precision of the coordinates
+          phoneLoc = applyMovingAverageFilter(phoneLoc);
+
+          Serial.println("Target Longitude: " + String(phoneLoc.longitude, 8));
+          Serial.println("Target Latitude: " + String(phoneLoc.latitude, 8));
 
           driveTo(phoneLoc);
           selfDrivingInProgress = true;
