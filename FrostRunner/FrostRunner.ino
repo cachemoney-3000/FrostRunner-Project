@@ -324,8 +324,11 @@ void loop()
           phoneLoc.latitude = targetLatitude;
           phoneLoc.longitude = targetLongitude;
 
-          Serial.println("Target Longitude: " + String(targetLongitude, 8));
-          Serial.println("Target Latitude: " + String(targetLatitude, 8));
+          // Apply smoothing to try to increase the precision of the coordinates
+          phoneLoc = applyMovingAverageFilter(phoneLoc);
+
+          Serial.println("Target Longitude: " + String(phoneLoc.longitude, 8));
+          Serial.println("Target Latitude: " + String(phoneLoc.latitude, 8));
 
           driveTo(phoneLoc);
           selfDrivingInProgress = true;

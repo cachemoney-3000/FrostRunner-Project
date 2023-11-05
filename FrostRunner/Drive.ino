@@ -11,105 +11,125 @@ void driveTo(struct Location &phoneLoc) {
     //robotLoc.latitude = 28.59108000;
     //robotLoc.longitude = -81.46820800;
 
-    Serial.println("Robot Longitude: " + String(robotLoc.longitude, 8));
-    Serial.println("Robot Latitude: " + String(robotLoc.latitude, 8));
+    /** Calculate the azimuths */
+    byte locationAzimuth = calculateAzimuth(robotLoc, phoneLoc);
+    compass.read();
+    byte compassAzimuth = compass.getAzimuth();
+    Serial.println("Azimuth Loc = " + String(locationAzimuth) + " Azimuth Compass =" + String(compassAzimuth));
     
-    if (robotLoc.latitude != 0 && robotLoc.longitude != 0){
-        if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
-            Serial.println("Release in GPS");
-            steeringRelease();  // Stop the motor
-            steeringReleased = true;  // Set the steeringReleased flag to true
-        }
+    drive(distance, locationAzimuth, compassAzimuth);
 
-        // TODO geoDistance
-        distance = geoDistance(robotLoc, phoneLoc);
-        // Get the heading angle in degrees
-        float heading = geoHeading();
-        float bearing = geoBearing(robotLoc, phoneLoc) - heading;
-        
-        /* Serial.print("Distance: ");
-        Serial.println(distance);
+    globalTimeout -= 1; // Decrement timeout
 
-        Serial.print("Bearing: ");
-        Serial.println(bearing);
-
-        Serial.print("Heading: ");
-        Serial.println(heading); */
-        
-        // TODO drive -> Motor controls
-        drive(distance, bearing);
-        //Serial.println("Drive: distance =" + String(distance) + " bearing =" + String(bearing));
-
-        globalTimeout -= 1;
-
-        if ((distance > 1000.0 && distance < 1.0) || globalTimeout == 0){
-            Serial.println("Self Driving: TIMEOUT");
-            stop();
-            straightenWheel(); 
-            selfDrivingInProgress = false;
-            globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
-        }
-
+    if ((distance > 1000.0 && distance < 1.0) || globalTimeout == 0){
+      Serial.println("Self Driving: TIMEOUT");
+      stop();
+      selfDrivingInProgress = false;
+      isVehicleTurning = false;
+      globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
     }
-
   }
 }
 
-void drive(float distance, float bearing) {
-    float bearingTolerance = 10.0;   // Define a tolerance of 10 degrees for heading
-    float distanceTolerance = 1.0;  // Define a tolerance of 1 meters for distance
+// Convert degrees to radians
+double toRadians(double degrees) {
+  return degrees * (3.14159265358979323846 / 180.0);
+}
 
-    // Ensure the heading difference is within the range of -180 to 180 degrees
-    if (bearing > 180.0) {
-        bearing -= 360.0;
-    } else if (bearing < -180.0) {
-        bearing += 360.0;
+// Calculate the azimuth between two GPS coordinates and return it as a byte
+byte calculateAzimuth(struct Location &robotLoc, struct Location &phoneLoc) {
+  phoneLoc.latitude = toRadians(phoneLoc.latitude);
+  phoneLoc.longitude = toRadians(phoneLoc.longitude);
+  robotLoc.latitude = toRadians(robotLoc.latitude);
+  robotLoc.longitude = toRadians(robotLoc.longitude);
+
+  double deltaLon = robotLoc.longitude - phoneLoc.longitude;
+
+  double y = sin(deltaLon) * cos(robotLoc.latitude);
+  double x = cos(phoneLoc.latitude) * sin(robotLoc.latitude) - sin(phoneLoc.latitude) * cos(robotLoc.latitude) * cos(deltaLon);
+
+  double azimuth = atan2(y, x);
+
+  // Convert radians to degrees
+  azimuth = fmod((azimuth * 180.0 / PI + 360), 360);
+
+  // Convert the azimuth to a byte (0-255)
+  byte azimuthByte = static_cast<byte>(azimuth * 255 / 360);
+
+  return azimuthByte;
+}
+
+void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
+  // For the delay timer
+  unsigned long startTime = millis(); // Store the start time
+  unsigned long delayTime = SELF_DRIVING_STEERING_DELAY; 
+
+  int headingTolerance = 30;
+  float distanceTolerance = 1.0;
+
+  // Normalize azimuthDifference to the range [-180, 180] degrees
+  int azimuthDifference = locationAzimuth - compassAzimuth;
+
+  // Ensure azimuthDifference is within [0, 360] range
+  if (azimuthDifference < 0) {
+    azimuthDifference += 360;
+  }
+
+  // Check if you are facing the correct direction
+  if (azimuthDifference <= headingTolerance || azimuthDifference >= 360 - headingTolerance) {
+    stop();
+
+    Serial.println("Facing the correct direction: " + String(azimuthDifference));
+    isVehicleTurning = false;
+    if (steeringLocation != 0){
+      straightenWheel();
     }
+  } 
+  else {
+    stop();
 
-    // TODO
-    // Turning the vehicle
-    if (fabs(bearing) > bearingTolerance) {
-        if (bearing > 0) {
-            // Turn right (clockwise)
-            if (steeringLocation < 1) {
-                Serial.println("Self Driving: Turn Right");
-                steeringLocation = steerRight(false, steeringLocation);
-            }
-        } 
-        else {
-            // Turn left (counterclockwise)
-            if (steeringLocation > -1) {
-                Serial.println("Self Driving: Turn Left");
-                steeringLocation = steerLeft(false, steeringLocation);
-            }
-        }
-        
-        forward(SELF_DRIVING_FORWARD_SPEED - 20);  // Adjust the speed as needed
-        isVehicleTurning = true;
-    } 
+    if (azimuthDifference < 180) {
+      // Steer Right
+      Serial.println("Steer Right: " + String(azimuthDifference));
+      steeringLocation = steerRight(false, steeringLocation);
+    }
     else {
-        Serial.println("Self Driving: Stop Turning");
-        straightenWheel(); 
-        stop();
-        isVehicleTurning = false;
+      // Steer Left
+      Serial.println("Steer Left: " + String(azimuthDifference));
+      steeringLocation = steerLeft(false, steeringLocation);
+    }
+    forward(SELF_DRIVING_FORWARD_SPEED);
+    isVehicleTurning = true;
+
+    unsigned long currentTime = millis(); // Get the current time
+    // Add a 1.5 delay timer
+    while (currentTime - startTime < delayTime) {
+      currentTime = millis(); // Update the current time
     }
 
-    // Move forward and reverse
-    if (!isVehicleTurning) {
-        // Move forward or backward based on distance
-        if (distance > distanceTolerance) {
-            Serial.println("Self Driving: Forward");
-            forward(SELF_DRIVING_FORWARD_SPEED);  // Adjust the speed as needed
-        } 
-        else if (distance < -distanceTolerance) {
-            Serial.println("Self Driving: Reverse");
-            reverse(SELF_DRIVING_REVERSE_SPEED);  // Adjust the speed as needed
-        } 
-        else {
-            Serial.println("Self Driving: Destination Reached");
-            stop();
-        }
-    }
+    Serial.println("Delay done");
+    stop();
+  }
+  
+  // Move forward and reverse
+  if (!isVehicleTurning) {
+      // Move forward or backward based on distance
+      if (distance > distanceTolerance) {
+          Serial.println("Self Driving: Forward");
+          forward(SELF_DRIVING_FORWARD_SPEED);
+      } 
+      else if (distance < -distanceTolerance) {
+          Serial.println("Self Driving: Reverse");
+          reverse(SELF_DRIVING_FORWARD_SPEED);
+      } 
+      else {
+          Serial.println("Self Driving: Destination Reached");
+          stop();
+          selfDrivingInProgress = false;
+            isVehicleTurning = false;
+            globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
+      }
+  }
 }
 
 float geoDistance(struct Location &robotLoc, struct Location &phoneLoc){
@@ -124,48 +144,6 @@ float geoDistance(struct Location &robotLoc, struct Location &phoneLoc){
 
     // returns distance in meters
     return R * y;
-}
-
-float geoBearing(struct Location &robotLoc, struct Location &phoneLoc) {
-    float y = sin(phoneLoc.longitude - robotLoc.longitude) * cos(phoneLoc.latitude);
-    float x = cos(robotLoc.latitude) * sin(phoneLoc.latitude) - sin(robotLoc.latitude) * cos(phoneLoc.latitude) * cos(phoneLoc.longitude - robotLoc.longitude);
-    
-    float bearing = atan2(y, x) * RADTODEG;
-    
-    // Ensure the bearing is within the range of 0 to 360 degrees
-    if (bearing < 0) {
-        bearing += 360.0;
-    }
-    return bearing;
-}
-
-
-float geoHeading() {
-    // Hold the module so that Z is pointing 'up' and you can measure the heading with x&y
-    // Calculate heading when the magnetometer is level, then correct for signs of axis.
-    compass.read();
-    float heading = atan2(compass.getY(), compass.getX()) * RAD_TO_DEG;
-
-    // Offset
-    heading -= DECLINATION_ANGLE;
-    heading -= COMPASS_OFFSET;
-
-    // Correct for when signs are reversed.
-    if(heading < 0)
-    heading += 2 * PI;
-
-    // Check for wrap due to addition of declination.
-    if(heading > 2 * PI)
-    heading -= 2 * PI;
-
-    // Convert radians to degrees for readability.
-    float headingDegrees = heading * 180 / PI; 
-
-    // Map to -180 - 180
-    while (headingDegrees < -180) headingDegrees += 360;
-    while (headingDegrees >  180) headingDegrees -= 360;
-
-    return headingDegrees;
 }
 
 void checkForObstacle() {
