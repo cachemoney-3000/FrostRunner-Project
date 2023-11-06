@@ -1,41 +1,22 @@
 // Get Latest GPS coordinates
-bool checkGPS()
+void checkGPS()                                                 // Get Latest GPS coordinates
 {
-  while (Serial1.available()){
-    if(gps.encode(Serial1.read())){
-      return true;
-    };
-  }
-  return false;
+  while (Serial1.available() > 0)
+    gps.encode(Serial1.read());
 } 
 
-// Get and process GPS data
-Location gpsdump() {
-  Location robotLoc;
-  robotLoc.latitude = gps.location.lat();
-  robotLoc.longitude = gps.location.lng();
-
-  return robotLoc;
-}
 
 Location getGPS() {
-  unsigned long start = millis();
-  while (millis() - start < GPS_UPDATE_INTERVAL) {
-    // If we recieved new location then take the coordinates and pack them into a struct
-    if (checkGPS())
-      return gpsdump();
+  checkGPS();
+  Location coordinates;
 
-    delay(100); // Small delay to allow the GPS module to provide updated data
-  }
+  coordinates.latitude = gps.location.lat();
+  coordinates.longitude = gps.location.lng();
 
-  Location robotLoc;
-  robotLoc.latitude = 0.0;
-  robotLoc.longitude = 0.0;
-  
-  return robotLoc;
+  return coordinates;
 }
 
-Location applyMovingAverageFilter(struct Location &newLocation) {
+Location applyMovingAverageFilter(Location newLocation) {
   newLocation.latitude = (1 - GPS_FILTER_WEIGHT) * newLocation.latitude + GPS_FILTER_WEIGHT * newLocation.latitude;
   newLocation.longitude = (1 - GPS_FILTER_WEIGHT) * newLocation.longitude + GPS_FILTER_WEIGHT * newLocation.longitude;
   

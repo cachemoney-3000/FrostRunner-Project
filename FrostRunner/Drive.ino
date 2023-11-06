@@ -1,19 +1,24 @@
 // Go to the location specified by phoneLoc (latitude, longitude)
 void driveTo(struct Location &phoneLoc) {
+  wdt_reset(); // Prevent the reset
   Location robotLoc = getGPS();
-  //robotLoc.latitude = 28.59108000;
-  //robotLoc.longitude = -81.46820800;
+  /* Location robotLoc;
+  robotLoc.latitude = 28.59109411244622;
+  robotLoc.longitude = -81.46732786360467; */
 
-  // Apply smoothing to try to increase the precision of the coordinates
-  robotLoc = applyMovingAverageFilter(robotLoc);
   if (robotLoc.latitude != 0 && robotLoc.longitude != 0) {
+    robotLoc = getGPS();
+
     float distance = gps.distanceBetween(phoneLoc.latitude, phoneLoc.longitude, robotLoc.latitude, robotLoc.longitude);
+
+    Serial.println("Robot Longitude: " + String(robotLoc.longitude , 8));
+    Serial.println("Robot Latitude: " + String(robotLoc.latitude, 8));
 
     /** Calculate the azimuths */
     byte locationAzimuth = calculateAzimuth(robotLoc, phoneLoc);
     compass.read();
     byte compassAzimuth = compass.getAzimuth();
-    Serial.println("Azimuth Loc = " + String(locationAzimuth) + " Azimuth Compass =" + String(compassAzimuth));
+    Serial.println("Azimuth Loc = " + String(locationAzimuth) + " Azimuth Compass =" + String(compassAzimuth)+ " Distance =" + String(distance));
     
     drive(distance, locationAzimuth, compassAzimuth);
 
@@ -30,29 +35,33 @@ void driveTo(struct Location &phoneLoc) {
 }
 
 // Convert degrees to radians
-double toRadians(double degrees) {
-  return degrees * (3.14159265358979323846 / 180.0);
+double degreesToRadians(double degrees) {
+  return degrees * M_PI / 180.0;
+}
+
+double radiansToDegrees(double radians) {
+  return radians * 180.0 / M_PI;
 }
 
 // Calculate the azimuth between two GPS coordinates and return it as a byte
-byte calculateAzimuth(struct Location &robotLoc, struct Location &phoneLoc) {
-  phoneLoc.latitude = toRadians(phoneLoc.latitude);
-  phoneLoc.longitude = toRadians(phoneLoc.longitude);
-  robotLoc.latitude = toRadians(robotLoc.latitude);
-  robotLoc.longitude = toRadians(robotLoc.longitude);
+byte calculateAzimuth(Location currentLocation, Location targetLocation) {
+  double lat1 = degreesToRadians(currentLocation.latitude);
+  double lon1 = degreesToRadians(currentLocation.longitude);
+  double lat2 = degreesToRadians(targetLocation.latitude);
+  double lon2 = degreesToRadians(targetLocation.longitude);
 
-  double deltaLon = robotLoc.longitude - phoneLoc.longitude;
+  double deltaLon = lon2 - lon1;
 
-  double y = sin(deltaLon) * cos(robotLoc.latitude);
-  double x = cos(phoneLoc.latitude) * sin(robotLoc.latitude) - sin(phoneLoc.latitude) * cos(robotLoc.latitude) * cos(deltaLon);
+  double y = sin(deltaLon) * cos(lat2);
+  double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLon);
 
   double azimuth = atan2(y, x);
-
-  // Convert radians to degrees
-  azimuth = fmod((azimuth * 180.0 / PI + 360), 360);
+  azimuth = radiansToDegrees(azimuth);
+  Serial.println("Azimuth Not Normalized: " + String(azimuth));
+  azimuth = fmod((azimuth + 360.0), 360.0);  // Normalize to [0, 360) degrees
 
   // Convert the azimuth to a byte (0-255)
-  byte azimuthByte = static_cast<byte>(azimuth * 255 / 360);
+  byte azimuthByte = byte(azimuth);
 
   return azimuthByte;
 }
@@ -61,9 +70,6 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
   // For the delay timer
   unsigned long startTime = millis(); // Store the start time
   unsigned long delayTime = SELF_DRIVING_STEERING_DELAY; 
-
-  int headingTolerance = 30;
-  float distanceTolerance = 1.0;
 
   // Normalize azimuthDifference to the range [-180, 180] degrees
   int azimuthDifference = locationAzimuth - compassAzimuth;
@@ -103,7 +109,8 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
     // Add a 1.5 delay timer
     while (currentTime - startTime < delayTime) {
       currentTime = millis(); // Update the current time
-      checkForObstacle();
+      wdt_reset(); // Prevent the reset
+      //checkForObstacle();
     }
 
     Serial.println("Delay done");

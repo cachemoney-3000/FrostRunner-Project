@@ -58,6 +58,8 @@ bool motorDirectionReverse = false;
 
 // Self Driving
 bool isVehicleTurning = false;
+float targetLatitude = 0; // = 28.59108000;
+float targetLongitude = 0; // = -81.46820800;
 
 void setup()
 {
@@ -71,7 +73,7 @@ void setup()
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
-  //Startup();  // Startup GPS Procedure
+  Startup();  // Startup GPS Procedure
 
   // Rear Motors
   pinMode(REAR_MOTOR_IN1, OUTPUT);
@@ -104,12 +106,15 @@ void setup()
   // Temperature
   dht.begin();
 
+  compass.setSmoothing(3,true);  
+
   wdt_enable(WDTO_1S); // Initialize the watchdog timer with a 1-second timeout
 }
 
 String result = "";
 void loop()
 {
+  compass.read(); // Keep reading the compass
   wdt_reset(); // Prevent the reset
   /**
    * Steering release
@@ -174,6 +179,7 @@ void loop()
    * 
    */
   while (Serial2.available() > 0 || selfDrivingInProgress){
+    wdt_reset(); // Prevent the reset
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
     // Trigger a watchdog timer reset
@@ -185,7 +191,7 @@ void loop()
 
     if(selfDrivingInProgress){
       Serial.println("SELF DRIVING IN PROGRESS");
-      checkForObstacle();
+      //checkForObstacle();
       driveTo(phoneLoc);
     }
 
@@ -285,26 +291,30 @@ void loop()
       // Summon Instructions, Get the GPS coordinate from user's phone
       else if(data.startsWith("X")){
         bool isSatelliteAcquired = checkSatellites();
+        //bool isSatelliteAcquired = true;
         String receivedCoordinates = data.substring(1);
         int separatorIndex = receivedCoordinates.indexOf('/');
         
 
         // Split the location string into longitude and latitude
         if (!selfDrivingInProgress && isSatelliteAcquired && separatorIndex != -1) {
-          String longitudeStr = data.substring(0, separatorIndex);
-          String latitudeStr = data.substring(separatorIndex + 1);
+          String longitudeStr = data.substring(1, separatorIndex);
+          String latitudeStr = data.substring(separatorIndex + 2);
 
           // Convert latitude and longitude to float values
-          float newTargetLatitude = latitudeStr.toDouble();
-          float newTargetLongitude = longitudeStr.toDouble();
-          
+          float newTargetLatitude = latitudeStr.toFloat();
+          float newTargetLongitude = longitudeStr.toFloat();
+
           phoneLoc.latitude = newTargetLatitude;
           phoneLoc.longitude = newTargetLongitude;
+
+          //phoneLoc.latitude = 28.59109411244622;
+          //phoneLoc.longitude = -81.46732786360467;
 
           // Apply smoothing to try to increase the precision of the coordinates
           phoneLoc = applyMovingAverageFilter(phoneLoc);
 
-          Serial.println("Target Longitude: " + String(phoneLoc.longitude, 8));
+          Serial.println("Target Longitude: " + String(phoneLoc.longitude , 8));
           Serial.println("Target Latitude: " + String(phoneLoc.latitude, 8));
 
           driveTo(phoneLoc);

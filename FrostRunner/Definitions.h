@@ -11,10 +11,6 @@
 // Keep this above 1000
 #define GPS_UPDATE_INTERVAL 1000
 
-// Number of changes in movement to timeout for GPS waypoints
-// Keeps the robot from driving away if there is a problem
-#define GPS_WAYPOINT_TIMEOUT 25
-
 // Struct to combine our coordinates into one struct for ease of use
 struct Location {
   float latitude;
@@ -49,14 +45,14 @@ struct Location {
 #define STEERING_TIME_THRESHOLD 250 // Controls how long the motor will run when steering
 #define SELF_DRIVING_FORWARD_SPEED 200
 #define SELF_DRIVING_REVERSE_SPEED 200
-#define GLOBAL_SELF_DRIVING_TIMEOUT 15 
+#define GLOBAL_SELF_DRIVING_TIMEOUT 50 
 #define DISTANCE_TOLERANCE 50.0
 #define BEARING_TOLERANCE 5.0
 
 // Self Driving
 #define SELF_DRIVING_STEERING_DELAY 1500 // ms delay
 #define GPS_FILTER_WEIGHT 0.2f  // Filter weight (high = noisy, low = stable)
-#define SELF_DRIVING_HEADING_TOLERANCE 30 // degrees
+#define SELF_DRIVING_HEADING_TOLERANCE 60 // degrees
 #define SELF_DRIVING_DISTANCE_TOLERANCE 1.0f // cm
 
 // Temperature Sensor Pins

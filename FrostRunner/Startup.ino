@@ -7,6 +7,7 @@ void Startup()
   {       
     checkGPS();
     Number_of_SATS = (int)(gps.satellites.value());   // Query Tiny GPS for the number of Satellites Acquired
+    wdt_reset(); // Prevent the reset
   }    
   
   Serial.println(String(Number_of_SATS) + " Satellites Acquired");
