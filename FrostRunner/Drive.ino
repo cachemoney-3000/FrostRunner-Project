@@ -81,8 +81,6 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
 
   // Check if you are facing the correct direction
   if (azimuthDifference <= SELF_DRIVING_HEADING_TOLERANCE || azimuthDifference >= 360 - SELF_DRIVING_HEADING_TOLERANCE) {
-    stop();
-
     Serial.println("Facing the correct direction: " + String(azimuthDifference));
     isVehicleTurning = false;
     if (steeringLocation != 0){
