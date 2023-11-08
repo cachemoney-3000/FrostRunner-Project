@@ -24,7 +24,7 @@ void driveTo(struct Location &phoneLoc) {
 
     globalTimeout -= 1; // Decrement timeout
 
-    if ((distance > 1000.0 && distance < 1.0) || globalTimeout == 0){
+    if ((distance > 1000.0 && distance < 1.5) || globalTimeout == 0){
       Serial.println("Self Driving: TIMEOUT");
       stop();
       selfDrivingInProgress = false;
@@ -90,6 +90,13 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
   else {
     stop();
 
+    unsigned long currentTimeOne = millis(); // Get the current time
+    // Add a 1s delay timer
+    while (currentTimeOne - startTime < delayTime - 500) {
+      currentTimeOne = millis(); // Update the current time
+      wdt_reset(); // Prevent the reset
+    }
+
     if (azimuthDifference < 180) {
       // Steer Right
       Serial.println("Steer Right: " + String(azimuthDifference));
@@ -103,12 +110,12 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
     forward(SELF_DRIVING_FORWARD_SPEED);
     isVehicleTurning = true;
 
-    unsigned long currentTime = millis(); // Get the current time
+    unsigned long currentTimeTwo = millis(); // Get the current time
     // Add a 1.5 delay timer
-    while (currentTime - startTime < delayTime) {
-      currentTime = millis(); // Update the current time
+    while (currentTimeTwo - startTime < delayTime) {
+      currentTimeTwo = millis(); // Update the current time
       wdt_reset(); // Prevent the reset
-      //checkForObstacle();
+      checkForObstacle();
     }
 
     Serial.println("Delay done");
@@ -117,7 +124,7 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
   
   // Move forward and reverse
   if (!isVehicleTurning) {
-      // Move forward or backward based on distance
+      // Move forward or stop based on distance
       if (distance > SELF_DRIVING_DISTANCE_TOLERANCE) {
           Serial.println("Self Driving: Forward");
           forward(SELF_DRIVING_FORWARD_SPEED);

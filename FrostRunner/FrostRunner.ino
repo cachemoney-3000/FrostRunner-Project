@@ -191,7 +191,7 @@ void loop()
 
     if(selfDrivingInProgress){
       Serial.println("SELF DRIVING IN PROGRESS");
-      //checkForObstacle();
+      checkForObstacle();
       driveTo(phoneLoc);
     }
 
@@ -207,21 +207,24 @@ void loop()
             forward(motorSpeed);
           }
           break;
+
         case 2:
           // Reverse
           if (!motorDirectionReverse  && !selfDrivingInProgress) {
             reverse(motorSpeed);
           }
           break;
+
         case 9:
           // Stop
           stop();
           if (selfDrivingInProgress){
             selfDrivingInProgress = false;
             globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
+            isVehicleTurning = false;
           }
-
           break;
+
         default:
           break;
       }
@@ -317,8 +320,8 @@ void loop()
           Serial.println("Target Longitude: " + String(phoneLoc.longitude , 8));
           Serial.println("Target Latitude: " + String(phoneLoc.latitude, 8));
 
-          driveTo(phoneLoc);
           selfDrivingInProgress = true;
+          driveTo(phoneLoc);
         }
       }
     }

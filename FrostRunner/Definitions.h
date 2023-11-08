@@ -1,12 +1,3 @@
-// You must then add your 'Declination Angle' to the compass, which is the 'Error' of the magnetic field in your location.
-// Find yours here: http://www.magnetic-declination.com/
-// Mine is: 13° 24' E (Positive), which is ~13 Degrees, or (which we need) 0.23 radians
-#define DECLINATION_ANGLE -0.07f
-
-// The offset of the mounting position to true north
-// It would be best to run the /examples/magsensor sketch and compare to the compass on your smartphone
-#define COMPASS_OFFSET 0.01f
-
 // How often the GPS should update in MS
 // Keep this above 1000
 #define GPS_UPDATE_INTERVAL 1000
@@ -46,14 +37,12 @@ struct Location {
 #define SELF_DRIVING_FORWARD_SPEED 200
 #define SELF_DRIVING_REVERSE_SPEED 200
 #define GLOBAL_SELF_DRIVING_TIMEOUT 50 
-#define DISTANCE_TOLERANCE 50.0
-#define BEARING_TOLERANCE 5.0
 
 // Self Driving
 #define SELF_DRIVING_STEERING_DELAY 1500 // ms delay
 #define GPS_FILTER_WEIGHT 0.2f  // Filter weight (high = noisy, low = stable)
 #define SELF_DRIVING_HEADING_TOLERANCE 60 // degrees
-#define SELF_DRIVING_DISTANCE_TOLERANCE 1.0f // cm
+#define SELF_DRIVING_DISTANCE_TOLERANCE 1.5f // meters
 
 // Temperature Sensor Pins
 #define DHTPIN 50   // Digital pi
