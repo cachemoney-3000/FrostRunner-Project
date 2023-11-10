@@ -108,7 +108,7 @@ void setup()
 
   compass.setSmoothing(3,true);  
 
-  wdt_enable(WDTO_1S); // Initialize the watchdog timer with a 1-second timeout
+  wdt_enable(WDTO_2S); // Initialize the watchdog timer with a 1-second timeout
 }
 
 String result = "";
@@ -293,14 +293,16 @@ void loop()
 
       // Summon Instructions, Get the GPS coordinate from user's phone
       else if(data.startsWith("X")){
-        bool isSatelliteAcquired = checkSatellites();
-        //bool isSatelliteAcquired = true;
+        Location loc = getGPS();
+        bool isSatelliteAcquired = true;
         String receivedCoordinates = data.substring(1);
         int separatorIndex = receivedCoordinates.indexOf('/');
         
 
         // Split the location string into longitude and latitude
-        if (!selfDrivingInProgress && isSatelliteAcquired && separatorIndex != -1) {
+        if (!selfDrivingInProgress && loc.latitude != 0 && loc.longitude != 0 && separatorIndex != -1) {
+          Serial2.println(String(Number_of_SATS) + " Satellites Acquired");     
+          
           String longitudeStr = data.substring(1, separatorIndex);
           String latitudeStr = data.substring(separatorIndex + 2);
 

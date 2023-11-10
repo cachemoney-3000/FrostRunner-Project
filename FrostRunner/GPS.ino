@@ -23,3 +23,14 @@ Location applyMovingAverageFilter(Location newLocation) {
   return newLocation;
 }
 
+bool checkSatellites() {
+  checkGPS();
+  if (Number_of_SATS <= 3) {
+    Serial2.println("No Satellites Found");
+    return false;
+  }
+  else {
+    Serial2.println(String(Number_of_SATS) + " Satellites Acquired");     
+    return true;
+  }
+}
