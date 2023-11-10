@@ -1,17 +1,28 @@
 // Get Latest GPS coordinates
-void checkGPS()                                                 // Get Latest GPS coordinates
-{
-  while (Serial1.available() > 0)
-    gps.encode(Serial1.read());
-} 
+bool checkGPS() {
+  while (Serial1.available() > 0) {
+    if (gps.encode(Serial1.read())) {
+      return true;
+    }
+  }
+  return false;
+}
 
 
 Location getGPS() {
-  checkGPS();
   Location coordinates;
 
-  coordinates.latitude = gps.location.lat();
-  coordinates.longitude = gps.location.lng();
+  unsigned long start = millis();
+  while (millis() - start < GPS_TIMEOUT) {
+    // If we recieved new location then take the coordinates and pack them into a struct
+    if (checkGPS())
+      coordinates.latitude = gps.location.lat();
+      coordinates.longitude = gps.location.lng();
+      return coordinates;
+  }
+
+  coordinates.latitude = 0.0;
+  coordinates.longitude = 0.0;
 
   return coordinates;
 }

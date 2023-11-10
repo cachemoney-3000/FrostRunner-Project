@@ -69,11 +69,13 @@ void setup()
   // Start the software serial port at the GPS's default baud (18, 19)
   Serial1.begin(9600);  // GPS
   Serial2.begin(9600);  // Bluetooth, Communication with Phone 
-  Serial.println("Mega up ");  // SERIAL PRINTS
+  
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
   Startup();  // Startup GPS Procedure
+
+  Serial.println("Mega up ");  // SERIAL PRINTS
 
   // Rear Motors
   pinMode(REAR_MOTOR_IN1, OUTPUT);
@@ -186,7 +188,7 @@ void loop()
     if(data.startsWith("R")){
       stop();
       straightenWheel();
-      delay(2000); // Force a reset
+      delay(3000); // Force a reset
     }
 
     if(selfDrivingInProgress){
@@ -298,11 +300,12 @@ void loop()
         String receivedCoordinates = data.substring(1);
         int separatorIndex = receivedCoordinates.indexOf('/');
         
-
+        Serial.println(" Longitude: " + String(loc.longitude , 8));
+        Serial.println(" Latitude: " + String(loc.latitude, 8)); 
         // Split the location string into longitude and latitude
         if (!selfDrivingInProgress && loc.latitude != 0 && loc.longitude != 0 && separatorIndex != -1) {
           Serial2.println(String(Number_of_SATS) + " Satellites Acquired");     
-          
+
           String longitudeStr = data.substring(1, separatorIndex);
           String latitudeStr = data.substring(separatorIndex + 2);
 
@@ -324,6 +327,9 @@ void loop()
 
           selfDrivingInProgress = true;
           driveTo(phoneLoc);
+        }
+        else {
+          Serial2.println("No Satelittes");   
         }
       }
     }
