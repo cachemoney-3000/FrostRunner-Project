@@ -45,7 +45,7 @@ QMC5883LCompass compass;
 int steeringSpeed = 255;
 int motorSpeed = 255;
 
-unsigned int motorStartTime = 0;  // Variable to store the time when the steering command was triggered
+unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
 
 // Steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
@@ -60,6 +60,7 @@ bool motorDirectionReverse = false;
 bool isVehicleTurning = false;
 float targetLatitude = 0; // = 28.59108000;
 float targetLongitude = 0; // = -81.46820800;
+bool turnOnLights = false;
 
 void setup()
 {
@@ -108,6 +109,8 @@ void setup()
   // Temperature
   dht.begin();
 
+  pinMode(LEDPIN, OUTPUT);
+
   compass.setSmoothing(3,true);  
 
   wdt_enable(WDTO_2S); // Initialize the watchdog timer with a 1-second timeout
@@ -122,20 +125,11 @@ void loop()
    * Steering release
    * Check if it's time to stop the steering motor
   */
-  unsigned long currentMillis = millis();
-  unsigned long elapsedTime = 0;
-
-  if (currentMillis >= motorStartTime) {
-      elapsedTime = currentMillis - motorStartTime;
-  } else {
-      // Rollover has occurred
-      elapsedTime = (ULONG_MAX - motorStartTime) + currentMillis + 1;
-  }
-
-  if (!steeringReleased && (elapsedTime >= steeringRunDuration)) {
+  if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
       //Serial.println("Release");
       steeringRelease();  // Stop the motor
       steeringReleased = true;  // Set the steeringReleased flag to true
+      Serial.println("STEER RELEASED " + String(millis() - motorStartTime) + " " + String(millis()) + " " + String(motorStartTime));
   }
 
   /**
@@ -302,6 +296,17 @@ void loop()
         motorDirectionReverse = false;
         stop();
       } */
+
+      else if(data.startsWith("T")){
+        if (turnOnLights) {
+          // Turn off the LED
+          digitalWrite(LEDPIN, LOW);
+        }
+        else {
+          // Turn on the LED
+          digitalWrite(LEDPIN, HIGH);
+        }
+      }
 
       // Summon Instructions, Get the GPS coordinate from user's phone
       else if(data.startsWith("X")){

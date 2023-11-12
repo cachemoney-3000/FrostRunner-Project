@@ -47,4 +47,5 @@ struct Location {
 
 // Temperature Sensor Pins
 #define DHTPIN 50   // Digital pi
+#define LEDPIN 51
 #define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
