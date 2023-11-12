@@ -119,16 +119,6 @@ void loop()
   compass.read(); // Keep reading the compass
   wdt_reset(); // Prevent the reset
   /**
-   * Steering release
-   * Check if it's time to stop the steering motor
-  */
-  if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
-    //Serial.println("Release");
-    steeringRelease();  // Stop the motor
-    steeringReleased = true;  // Set the steeringReleased flag to true
-  }
-
-  /**
    * Object avoidance logic
    * 
    */
