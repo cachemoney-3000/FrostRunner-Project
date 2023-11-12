@@ -12,7 +12,7 @@ int steerLeft(boolean stop, int steerLocation){
   if(stop){
     Serial.print("steeringLocation before: ");
     Serial.println(steerLocation);
-    steeringRunDuration = 150;
+    steeringRunDuration = 120;
     Serial.println("steeringRunDuration");
     Serial.println(steeringRunDuration);
   }
@@ -40,7 +40,7 @@ int steerRight(boolean stop, int steerLocation) {
   if(stop){
     Serial.print("steerLocation before: ");
     Serial.println(steerLocation);
-    steeringRunDuration = 180;
+    steeringRunDuration = 170;
     Serial.println("steeringRunDuration");
     Serial.println(steeringRunDuration);
   }
