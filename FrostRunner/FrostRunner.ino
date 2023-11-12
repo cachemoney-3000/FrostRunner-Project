@@ -50,7 +50,7 @@ unsigned long motorStartTime = 0;  // Variable to store the time when the steeri
 // Steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
-unsigned int steeringRunDuration = STEERING_TIME_THRESHOLD;  // Threshold for steering
+unsigned long steeringRunDuration = STEERING_TIME_THRESHOLD;  // Threshold for steering
 
 // Define flag variable for motor direction
 bool motorDirectionForward = false;
@@ -114,6 +114,8 @@ void setup()
   compass.setSmoothing(3,true);  
 
   wdt_enable(WDTO_2S); // Initialize the watchdog timer with a 1-second timeout
+
+  Serial.println("START");
 }
 
 String result = "";
@@ -301,10 +303,12 @@ void loop()
         if (turnOnLights) {
           // Turn off the LED
           digitalWrite(LEDPIN, LOW);
+          turnOnLights = false;
         }
         else {
           // Turn on the LED
           digitalWrite(LEDPIN, HIGH);
+          turnOnLights = true;
         }
       }
 
