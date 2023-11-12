@@ -45,7 +45,7 @@ QMC5883LCompass compass;
 int steeringSpeed = 255;
 int motorSpeed = 255;
 
-unsigned int motorStartTime = 0;  // Variable to store the time when the steering command was triggered
+unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
 
 // Steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
@@ -122,20 +122,10 @@ void loop()
    * Steering release
    * Check if it's time to stop the steering motor
   */
-  unsigned long currentMillis = millis();
-  unsigned long elapsedTime = 0;
-
-  if (currentMillis >= motorStartTime) {
-      elapsedTime = currentMillis - motorStartTime;
-  } else {
-      // Rollover has occurred
-      elapsedTime = (ULONG_MAX - motorStartTime) + currentMillis + 1;
-  }
-
-  if (!steeringReleased && (elapsedTime >= steeringRunDuration)) {
-      //Serial.println("Release");
-      steeringRelease();  // Stop the motor
-      steeringReleased = true;  // Set the steeringReleased flag to true
+  if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
+    //Serial.println("Release");
+    steeringRelease();  // Stop the motor
+    steeringReleased = true;  // Set the steeringReleased flag to true
   }
 
   /**

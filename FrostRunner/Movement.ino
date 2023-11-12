@@ -1,30 +1,27 @@
-
 int steerLeft(boolean stop, int steerLocation){
   // Left
   steerLocation--;
 
-  if (steeringReleased) {
-    digitalWrite(STEERING_MOTOR_IN3, HIGH);
-    digitalWrite(STEERING_MOTOR_IN4, LOW);
-    analogWrite(STEERING_MOTOR_ENB, steeringSpeed);
+  digitalWrite(STEERING_MOTOR_IN3, HIGH);
+  digitalWrite(STEERING_MOTOR_IN4, LOW);
+  analogWrite(STEERING_MOTOR_ENB, steeringSpeed);
 
-    motorStartTime = millis();
-    steeringReleased = false;
+  motorStartTime = millis();
+  steeringReleased = false;
 
-    if(stop){
-      Serial.print("steeringLocation before: ");
-      Serial.println(steerLocation);
-      steeringRunDuration = 150;
-      Serial.println("steeringRunDuration");
-      Serial.println(steeringRunDuration);
-    }
-    else {
-      steeringRunDuration = 180;
-    }
-
-    Serial.println("SteerLocation");
+  if(stop){
+    Serial.print("steeringLocation before: ");
     Serial.println(steerLocation);
+    steeringRunDuration = 150;
+    Serial.println("steeringRunDuration");
+    Serial.println(steeringRunDuration);
   }
+  else {
+    steeringRunDuration = 180;
+  }
+
+  Serial.println("SteerLocation");
+  Serial.println(steerLocation);
 
   return steerLocation;
 }
@@ -33,28 +30,27 @@ int steerRight(boolean stop, int steerLocation) {
    // Right
   steerLocation++;
   
-  if (steeringReleased) {
-    digitalWrite(STEERING_MOTOR_IN3, LOW);
-    digitalWrite(STEERING_MOTOR_IN4, HIGH);
-    analogWrite(STEERING_MOTOR_ENB, steeringSpeed);
+  digitalWrite(STEERING_MOTOR_IN3, LOW);
+  digitalWrite(STEERING_MOTOR_IN4, HIGH);
+  analogWrite(STEERING_MOTOR_ENB, steeringSpeed);
 
-    motorStartTime = millis();
-    steeringReleased = false;
+  motorStartTime = millis();
+  steeringReleased = false;
 
-    if(stop){
-      Serial.print("steerLocation before: ");
-      Serial.println(steerLocation);
-      steeringRunDuration = 180;
-      Serial.println("steeringRunDuration");
-      Serial.println(steeringRunDuration);
-    }
-    else {
-      steeringRunDuration = 180;
-    }
-
-    Serial.println("SteerLocation");
+  if(stop){
+    Serial.print("steerLocation before: ");
     Serial.println(steerLocation);
+    steeringRunDuration = 180;
+    Serial.println("steeringRunDuration");
+    Serial.println(steeringRunDuration);
   }
+  else {
+    steeringRunDuration = 180;
+  }
+
+
+  Serial.println("SteerLocation");
+  Serial.println(steerLocation);
 
   return steerLocation;
 }
