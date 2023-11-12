@@ -8,20 +8,17 @@ int steerLeft(boolean stop, int steerLocation){
   analogWrite(STEERING_MOTOR_ENB, steeringSpeed);
 
   motorStartTime = millis();
+  steeringReleased = false;
 
   if(stop){
     Serial.print("steeringLocation before: ");
     Serial.println(steerLocation);
-    steeringRunDuration = 120;
+    steeringRunDuration = 150;
     Serial.println("steeringRunDuration");
     Serial.println(steeringRunDuration);
   }
   else {
     steeringRunDuration = 180;
-  }
-
-  while((millis() - motorStartTime >= steeringRunDuration)){
-    steeringRelease();  // Stop the motor
   }
 
   Serial.println("SteerLocation");
@@ -39,6 +36,7 @@ int steerRight(boolean stop, int steerLocation) {
   analogWrite(STEERING_MOTOR_ENB, steeringSpeed);
 
   motorStartTime = millis();
+  steeringReleased = false;
 
   if(stop){
     Serial.print("steerLocation before: ");
@@ -49,10 +47,6 @@ int steerRight(boolean stop, int steerLocation) {
   }
   else {
     steeringRunDuration = 180;
-  }
-
-  while((millis() - motorStartTime >= steeringRunDuration)){
-    steeringRelease();  // Stop the motor
   }
 
   Serial.println("SteerLocation");

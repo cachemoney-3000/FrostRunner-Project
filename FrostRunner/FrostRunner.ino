@@ -73,7 +73,7 @@ void setup()
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
-  Startup();  // Startup GPS Procedure
+  
 
   Serial.println("Mega up ");  // SERIAL PRINTS
 
@@ -118,6 +118,16 @@ void loop()
 {
   compass.read(); // Keep reading the compass
   wdt_reset(); // Prevent the reset
+  /**
+   * Steering release
+   * Check if it's time to stop the steering motor
+  */
+  if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
+    //Serial.println("Release");
+    steeringRelease();  // Stop the motor
+    steeringReleased = true;  // Set the steeringReleased flag to true
+  }
+
   /**
    * Object avoidance logic
    * 
@@ -269,7 +279,7 @@ void loop()
       }
 
       // Steering Threshold Adjustment
-      else if(data.startsWith("T")  && !selfDrivingInProgress){
+      /* else if(data.startsWith("T")  && !selfDrivingInProgress){
         // Set the new motor speed
         steeringRunDuration += data.substring(1).toInt();
         // Limit the range of steeringRunDuration to 50-300
@@ -281,10 +291,12 @@ void loop()
         motorDirectionForward = false;
         motorDirectionReverse = false;
         stop();
-      }
+      } */
 
       // Summon Instructions, Get the GPS coordinate from user's phone
       else if(data.startsWith("X")){
+        Startup();  // Startup GPS Procedure
+
         Location loc = getGPS();
         bool locationAcquired = loc.latitude != 0 && loc.longitude != 0;
 

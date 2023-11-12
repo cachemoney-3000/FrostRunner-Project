@@ -33,7 +33,7 @@ struct Location {
 #define STEERING_MOTOR_IN4 11
 #define STEERING_MOTOR_ENB 13
 
-#define STEERING_TIME_THRESHOLD 250 // Controls how long the motor will run when steering
+#define STEERING_TIME_THRESHOLD 180 // Controls how long the motor will run when steering
 #define SELF_DRIVING_FORWARD_SPEED 200
 #define SELF_DRIVING_REVERSE_SPEED 200
 #define GLOBAL_SELF_DRIVING_TIMEOUT 50 

@@ -1,6 +1,7 @@
 // Get Latest GPS coordinates
 bool checkGPS() {
   while (Serial1.available() > 0) {
+    wdt_reset(); // Prevent the reset
     if (gps.encode(Serial1.read())) {
       return true;
     }
@@ -14,6 +15,7 @@ Location getGPS() {
 
   unsigned long start = millis();
   while (millis() - start < GPS_TIMEOUT) {
+    wdt_reset(); // Prevent the reset
     // If we recieved new location then take the coordinates and pack them into a struct
     if (checkGPS())
       coordinates.latitude = gps.location.lat();
