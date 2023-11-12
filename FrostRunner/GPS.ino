@@ -36,7 +36,7 @@ Location applyMovingAverageFilter(Location newLocation) {
 
 bool checkSatellites() {
   checkGPS();
-  if (Number_of_SATS <= 3) {
+  if (Number_of_SATS <= 4) {
     Serial2.println("No Satellites Found");
     return false;
   }

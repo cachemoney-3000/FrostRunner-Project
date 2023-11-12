@@ -26,6 +26,7 @@ void driveTo(struct Location &phoneLoc) {
 
     if ((distance > 1000.0 && distance < 1.5) || globalTimeout == 0){
       Serial.println("Self Driving: TIMEOUT");
+      Serial2.println("Timeout Reached");
       stop();
       selfDrivingInProgress = false;
       isVehicleTurning = false;
@@ -131,6 +132,7 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
       }
       else {
           Serial.println("Self Driving: Destination Reached");
+          Serial2.println("Destination Reached");
           stop();
           selfDrivingInProgress = false;
           isVehicleTurning = false;

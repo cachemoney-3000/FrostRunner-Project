@@ -290,14 +290,15 @@ void loop()
       // Summon Instructions, Get the GPS coordinate from user's phone
       else if(data.startsWith("X")){
         Location loc = getGPS();
-        bool isSatelliteAcquired = true;
+        bool locationAcquired = loc.latitude != 0 && loc.longitude != 0;
+
         String receivedCoordinates = data.substring(1);
         int separatorIndex = receivedCoordinates.indexOf('/');
         
         Serial.println(" Longitude: " + String(loc.longitude , 8));
         Serial.println(" Latitude: " + String(loc.latitude, 8)); 
         // Split the location string into longitude and latitude
-        if (!selfDrivingInProgress && loc.latitude != 0 && loc.longitude != 0 && separatorIndex != -1) {
+        if (!selfDrivingInProgress && locationAcquired && separatorIndex != -1) {
           Serial2.println(String(Number_of_SATS) + " Satellites Acquired");     
 
           String longitudeStr = data.substring(1, separatorIndex);
@@ -323,7 +324,7 @@ void loop()
           driveTo(phoneLoc);
         }
         else {
-          Serial2.println("No Satelittes");   
+          Serial2.println("No Satellites Found");   
         }
       }
     }
