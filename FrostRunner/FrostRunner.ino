@@ -122,10 +122,20 @@ void loop()
    * Steering release
    * Check if it's time to stop the steering motor
   */
-  if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
-    //Serial.println("Release");
-    steeringRelease();  // Stop the motor
-    steeringReleased = true;  // Set the steeringReleased flag to true
+  unsigned long currentMillis = millis();
+  unsigned long elapsedTime = 0;
+
+  if (currentMillis >= motorStartTime) {
+      elapsedTime = currentMillis - motorStartTime;
+  } else {
+      // Rollover has occurred
+      elapsedTime = (ULONG_MAX - motorStartTime) + currentMillis + 1;
+  }
+
+  if (!steeringReleased && (elapsedTime >= steeringRunDuration)) {
+      //Serial.println("Release");
+      steeringRelease();  // Stop the motor
+      steeringReleased = true;  // Set the steeringReleased flag to true
   }
 
   /**
