@@ -220,11 +220,9 @@ void loop()
         default:
           break;
       }
-
-      break; // Break out immediately
     }
     // Steering logic
-    if (data.startsWith("C") && !selfDrivingInProgress) { 
+    else if (data.startsWith("C") && !selfDrivingInProgress) { 
       int servoInput = data.substring(1).toInt();
 
       switch (servoInput) {
@@ -243,8 +241,6 @@ void loop()
         default:
           break;
       }
-
-      break; // Break out immediately
     }
 
     if (data.length() > 0){

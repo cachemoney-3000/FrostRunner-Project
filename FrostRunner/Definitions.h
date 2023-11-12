@@ -39,7 +39,7 @@ struct Location {
 #define GLOBAL_SELF_DRIVING_TIMEOUT 50 
 
 // Self Driving
-#define SELF_DRIVING_STEERING_DELAY 1750 // ms delay
+#define SELF_DRIVING_STEERING_DELAY 1500 // ms delay
 #define GPS_FILTER_WEIGHT 0.2f  // Filter weight (high = noisy, low = stable)
 #define SELF_DRIVING_HEADING_TOLERANCE 60 // degrees
 #define SELF_DRIVING_DISTANCE_TOLERANCE 1.5f // meters
