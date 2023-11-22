@@ -40,7 +40,7 @@ double degreesToRadians(double degrees) {
 }
 
 double radiansToDegrees(double radians) {
-  return radians * 180.0 / M_PI;
+  return fmod((radians * 180.0 / M_PI + 360), 360);
 }
 
 // Calculate the azimuth between two GPS coordinates and return it as a byte
@@ -56,12 +56,12 @@ byte calculateAzimuth(Location currentLocation, Location targetLocation) {
   double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLon);
 
   double azimuth = atan2(y, x);
-  azimuth = radiansToDegrees(azimuth);
   Serial.println("Azimuth Not Normalized: " + String(azimuth));
-  azimuth = fmod((azimuth + 360.0), 360.0);  // Normalize to [0, 360) degrees
+  // Convert radians to degrees
+  azimuth = fmod((azimuth * 180.0 / PI + 360), 360);
 
   // Convert the azimuth to a byte (0-255)
-  byte azimuthByte = byte(azimuth);
+  byte azimuthByte = static_cast<byte>(azimuth * 255 / 360);
 
   return azimuthByte;
 }

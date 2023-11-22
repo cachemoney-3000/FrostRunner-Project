@@ -41,7 +41,7 @@ struct Location {
 // Self Driving
 #define SELF_DRIVING_STEERING_DELAY 1500 // ms delay
 #define GPS_FILTER_WEIGHT 0.2f  // Filter weight (high = noisy, low = stable)
-#define SELF_DRIVING_HEADING_TOLERANCE 160 // degrees
+#define SELF_DRIVING_HEADING_TOLERANCE 150 // degrees
 #define SELF_DRIVING_DISTANCE_TOLERANCE 1.5f // meters
 #define GPS_TIMEOUT 1000
 
