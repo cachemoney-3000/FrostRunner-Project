@@ -33,15 +33,15 @@ struct Location {
 #define STEERING_MOTOR_IN4 11
 #define STEERING_MOTOR_ENB 13
 
-#define STEERING_TIME_THRESHOLD 180 // Controls how long the motor will run when steering
-#define SELF_DRIVING_FORWARD_SPEED 200
+#define STEERING_TIME_THRESHOLD 120 // Controls how long the motor will run when steering
+#define SELF_DRIVING_FORWARD_SPEED 220
 #define SELF_DRIVING_REVERSE_SPEED 200
-#define GLOBAL_SELF_DRIVING_TIMEOUT 50 
+#define GLOBAL_SELF_DRIVING_TIMEOUT 20 
 
 // Self Driving
 #define SELF_DRIVING_STEERING_DELAY 1500 // ms delay
 #define GPS_FILTER_WEIGHT 0.2f  // Filter weight (high = noisy, low = stable)
-#define SELF_DRIVING_HEADING_TOLERANCE 70 // degrees
+#define SELF_DRIVING_HEADING_TOLERANCE 160 // degrees
 #define SELF_DRIVING_DISTANCE_TOLERANCE 1.5f // meters
 #define GPS_TIMEOUT 1000
 

@@ -14,8 +14,6 @@
 // Temperature
 DHT dht(DHTPIN, DHTTYPE);
 
-unsigned long lastTemperatureTime = 0; // Variable to track the last temperature send time
-unsigned long temperatureInterval = 5000; // Interval for sending temperature data (5 seconds)
 //******************************************************************************************************   
 // Ultrasonic Sensons, Collision Avoidance
 int trigPin[NUM_ULTRASONIC_SENSORS];  // Array of trigger pins
@@ -23,7 +21,6 @@ int echoPin[NUM_ULTRASONIC_SENSORS];  // Array of echo pins
 
 long ultrasonic_duration, ultrasonic_cm;
 
-boolean followEnabled = false;
 const unsigned long sensorReadInterval = 500; // Interval to read sensors (in milliseconds)
 unsigned long lastSensorReadTime = 0; // Variable to store the last time sensors were read
 //******************************************************************************************************                                                                  
@@ -64,18 +61,17 @@ bool turnOnLights = false;
 
 void setup()
 {
-  // Start the Arduino hardware serial port at 9600 baud
+  // Start the Arduino hardware serial port at 115200 baud
   Serial.begin(115200);                                            // Serial 0 is for communication with the computer
 
-  // Start the software serial port at the GPS's default baud (18, 19)
-  Serial1.begin(9600);  // GPS
-  Serial2.begin(9600);  // Bluetooth, Communication with Phone 
+  Serial1.begin(9600);  // Serial 1 = GPS
+  Serial2.begin(9600);  // Serial 2 = Bluetooth  
   
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
   
-
+  //Startup();
   Serial.println("Mega up ");  // SERIAL PRINTS
 
   // Rear Motors
@@ -113,7 +109,7 @@ void setup()
 
   compass.setSmoothing(3,true);  
 
-  wdt_enable(WDTO_2S); // Initialize the watchdog timer with a 1-second timeout
+  wdt_enable(WDTO_2S); // Initialize the watchdog timer with a 2-second timeout
 
   Serial.println("START");
 }
@@ -143,9 +139,9 @@ void loop()
     lastSensorReadTime = currentTime;
     // Read the back sensor
     float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
-    /* Serial.print("Back Sensor: ");
+    Serial.print("Back Sensor: ");
     Serial.print(distance);
-    Serial.println(" ultrasonic_cm"); */
+    Serial.println(" ultrasonic_cm");
 
     // Check if the back sensor reading is below the collision threshold
     if (distance < COLLISION_THRESHOLD) {
@@ -161,11 +157,11 @@ void loop()
     // Read the front sensors
     for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
       float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
-      /* Serial.print("Front Sensor ");
+      Serial.print("Front Sensor ");
       Serial.print(i + 1);
       Serial.print(": ");
       Serial.print(distance);
-      Serial.println(" ultrasonic_cm"); */
+      Serial.println(" ultrasonic_cm");
 
       if (distance < COLLISION_THRESHOLD) {
         Serial.print("Collision detected at");

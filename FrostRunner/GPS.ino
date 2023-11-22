@@ -17,14 +17,16 @@ Location getGPS() {
   while (millis() - start < GPS_TIMEOUT) {
     wdt_reset(); // Prevent the reset
     // If we recieved new location then take the coordinates and pack them into a struct
-    if (checkGPS())
+    if (checkGPS()){
       coordinates.latitude = gps.location.lat();
       coordinates.longitude = gps.location.lng();
       return coordinates;
+    }
+      
   }
 
-  coordinates.latitude = 0.0;
-  coordinates.longitude = 0.0;
+  coordinates.latitude = 0;
+  coordinates.longitude = 0;
 
   return coordinates;
 }

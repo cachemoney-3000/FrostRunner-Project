@@ -1,21 +1,20 @@
-// Go to the location specified by phoneLoc (latitude, longitude)
-void driveTo(struct Location &phoneLoc) {
+// Go to the location specified by targetLoc (latitude, longitude)
+void driveTo(struct Location targetLoc) {
   wdt_reset(); // Prevent the reset
   Location robotLoc = getGPS();
   /* Location robotLoc;
   robotLoc.latitude = 28.59109411244622;
   robotLoc.longitude = -81.46732786360467; */
 
-  if (robotLoc.latitude != 0 && robotLoc.longitude != 0) {
-    robotLoc = getGPS();
+  Serial.println("Robot Longitude: " + String(robotLoc.longitude , 8));
+  Serial.println("Robot Latitude: Here" + String(robotLoc.latitude, 8));
 
-    float distance = gps.distanceBetween(phoneLoc.latitude, phoneLoc.longitude, robotLoc.latitude, robotLoc.longitude);
+  if (robotLoc.latitude != 0.0 && robotLoc.longitude != 0.0) {
 
-    Serial.println("Robot Longitude: " + String(robotLoc.longitude , 8));
-    Serial.println("Robot Latitude: " + String(robotLoc.latitude, 8));
+    float distance = gps.distanceBetween(targetLoc.latitude, targetLoc.longitude, robotLoc.latitude, robotLoc.longitude);
 
     /** Calculate the azimuths */
-    byte locationAzimuth = calculateAzimuth(robotLoc, phoneLoc);
+    byte locationAzimuth = calculateAzimuth(robotLoc, targetLoc);
     compass.read();
     byte compassAzimuth = compass.getAzimuth();
     Serial.println("Azimuth Loc = " + String(locationAzimuth) + " Azimuth Compass =" + String(compassAzimuth)+ " Distance =" + String(distance));
@@ -26,7 +25,7 @@ void driveTo(struct Location &phoneLoc) {
 
     if ((distance > 1000.0 && distance < 1.5) || globalTimeout == 0){
       Serial.println("Self Driving: TIMEOUT");
-      Serial2.println("Timeout Reached");
+      Serial2.println("Stop");
       stop();
       selfDrivingInProgress = false;
       isVehicleTurning = false;
@@ -80,7 +79,7 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
     azimuthDifference += 360;
   }
 
-  // Check if you are facing the correct direction
+  // Check if its facing the correct direction
   if (azimuthDifference <= SELF_DRIVING_HEADING_TOLERANCE || azimuthDifference >= 360 - SELF_DRIVING_HEADING_TOLERANCE) {
     Serial.println("Facing the correct direction: " + String(azimuthDifference));
     isVehicleTurning = false;
@@ -92,8 +91,8 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
     stop();
 
     unsigned long currentTimeOne = millis(); // Get the current time
-    // Add a 1s delay timer
-    while (currentTimeOne - startTime < delayTime - 500) {
+    // Add a 500ms delay timer
+    while (currentTimeOne - startTime < delayTime - 1000) {
       currentTimeOne = millis(); // Update the current time
       wdt_reset(); // Prevent the reset
     }
