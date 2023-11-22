@@ -1,27 +1,31 @@
-// Go to the location specified by phoneLoc (latitude, longitude)
-void driveTo(struct Location &phoneLoc) {
+// Go to the location specified by targetLoc (latitude, longitude)
+void driveTo(struct Location targetLoc) {
+  wdt_reset(); // Prevent the reset
   Location robotLoc = getGPS();
-  //robotLoc.latitude = 28.59108000;
-  //robotLoc.longitude = -81.46820800;
+  /* Location robotLoc;
+  robotLoc.latitude = 28.59109411244622;
+  robotLoc.longitude = -81.46732786360467; */
 
-  if (robotLoc.latitude != 0 && robotLoc.longitude != 0) {
-    float distance = gps.distanceBetween(phoneLoc.latitude, phoneLoc.longitude, robotLoc.latitude, robotLoc.longitude);
-    robotLoc = getGPS(); // Get robot coordinates
-    //robotLoc.latitude = 28.59108000;
-    //robotLoc.longitude = -81.46820800;
+  Serial.println("Robot Longitude: " + String(robotLoc.longitude , 8));
+  Serial.println("Robot Latitude: Here" + String(robotLoc.latitude, 8));
+
+  if (robotLoc.latitude != 0.0 && robotLoc.longitude != 0.0) {
+
+    float distance = gps.distanceBetween(targetLoc.latitude, targetLoc.longitude, robotLoc.latitude, robotLoc.longitude);
 
     /** Calculate the azimuths */
-    byte locationAzimuth = calculateAzimuth(robotLoc, phoneLoc);
+    byte locationAzimuth = calculateAzimuth(robotLoc, targetLoc);
     compass.read();
     byte compassAzimuth = compass.getAzimuth();
-    Serial.println("Azimuth Loc = " + String(locationAzimuth) + " Azimuth Compass =" + String(compassAzimuth));
+    Serial.println("Azimuth Loc = " + String(locationAzimuth) + " Azimuth Compass =" + String(compassAzimuth)+ " Distance =" + String(distance));
     
     drive(distance, locationAzimuth, compassAzimuth);
 
     globalTimeout -= 1; // Decrement timeout
 
-    if ((distance > 1000.0 && distance < 1.0) || globalTimeout == 0){
+    if ((distance > 1000.0 && distance < 1.5) || globalTimeout == 0){
       Serial.println("Self Driving: TIMEOUT");
+      Serial2.println("Stop");
       stop();
       selfDrivingInProgress = false;
       isVehicleTurning = false;
@@ -31,29 +35,33 @@ void driveTo(struct Location &phoneLoc) {
 }
 
 // Convert degrees to radians
-double toRadians(double degrees) {
-  return degrees * (3.14159265358979323846 / 180.0);
+double degreesToRadians(double degrees) {
+  return degrees * M_PI / 180.0;
+}
+
+double radiansToDegrees(double radians) {
+  return radians * 180.0 / M_PI;
 }
 
 // Calculate the azimuth between two GPS coordinates and return it as a byte
-byte calculateAzimuth(struct Location &robotLoc, struct Location &phoneLoc) {
-  phoneLoc.latitude = toRadians(phoneLoc.latitude);
-  phoneLoc.longitude = toRadians(phoneLoc.longitude);
-  robotLoc.latitude = toRadians(robotLoc.latitude);
-  robotLoc.longitude = toRadians(robotLoc.longitude);
+byte calculateAzimuth(Location currentLocation, Location targetLocation) {
+  double lat1 = degreesToRadians(currentLocation.latitude);
+  double lon1 = degreesToRadians(currentLocation.longitude);
+  double lat2 = degreesToRadians(targetLocation.latitude);
+  double lon2 = degreesToRadians(targetLocation.longitude);
 
-  double deltaLon = robotLoc.longitude - phoneLoc.longitude;
+  double deltaLon = lon2 - lon1;
 
-  double y = sin(deltaLon) * cos(robotLoc.latitude);
-  double x = cos(phoneLoc.latitude) * sin(robotLoc.latitude) - sin(phoneLoc.latitude) * cos(robotLoc.latitude) * cos(deltaLon);
+  double y = sin(deltaLon) * cos(lat2);
+  double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLon);
 
   double azimuth = atan2(y, x);
-
-  // Convert radians to degrees
-  azimuth = fmod((azimuth * 180.0 / PI + 360), 360);
+  azimuth = radiansToDegrees(azimuth);
+  Serial.println("Azimuth Not Normalized: " + String(azimuth));
+  azimuth = fmod((azimuth + 360.0), 360.0);  // Normalize to [0, 360) degrees
 
   // Convert the azimuth to a byte (0-255)
-  byte azimuthByte = static_cast<byte>(azimuth * 255 / 360);
+  byte azimuthByte = byte(azimuth);
 
   return azimuthByte;
 }
@@ -63,9 +71,6 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
   unsigned long startTime = millis(); // Store the start time
   unsigned long delayTime = SELF_DRIVING_STEERING_DELAY; 
 
-  int headingTolerance = 30;
-  float distanceTolerance = 1.0;
-
   // Normalize azimuthDifference to the range [-180, 180] degrees
   int azimuthDifference = locationAzimuth - compassAzimuth;
 
@@ -74,10 +79,8 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
     azimuthDifference += 360;
   }
 
-  // Check if you are facing the correct direction
+  // Check if its facing the correct direction
   if (azimuthDifference <= SELF_DRIVING_HEADING_TOLERANCE || azimuthDifference >= 360 - SELF_DRIVING_HEADING_TOLERANCE) {
-    stop();
-
     Serial.println("Facing the correct direction: " + String(azimuthDifference));
     isVehicleTurning = false;
     if (steeringLocation != 0){
@@ -86,6 +89,13 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
   } 
   else {
     stop();
+
+    unsigned long currentTimeOne = millis(); // Get the current time
+    // Add a 500ms delay timer
+    while (currentTimeOne - startTime < delayTime - 1000) {
+      currentTimeOne = millis(); // Update the current time
+      wdt_reset(); // Prevent the reset
+    }
 
     if (azimuthDifference < 180) {
       // Steer Right
@@ -100,10 +110,11 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
     forward(SELF_DRIVING_FORWARD_SPEED);
     isVehicleTurning = true;
 
-    unsigned long currentTime = millis(); // Get the current time
+    unsigned long currentTimeTwo = millis(); // Get the current time
     // Add a 1.5 delay timer
-    while (currentTime - startTime < delayTime) {
-      currentTime = millis(); // Update the current time
+    while (currentTimeTwo - startTime < delayTime) {
+      currentTimeTwo = millis(); // Update the current time
+      wdt_reset(); // Prevent the reset
       checkForObstacle();
     }
 
@@ -113,13 +124,14 @@ void drive(float distance, byte locationAzimuth, byte compassAzimuth) {
   
   // Move forward and reverse
   if (!isVehicleTurning) {
-      // Move forward or backward based on distance
+      // Move forward or stop based on distance
       if (distance > SELF_DRIVING_DISTANCE_TOLERANCE) {
           Serial.println("Self Driving: Forward");
           forward(SELF_DRIVING_FORWARD_SPEED);
       }
       else {
           Serial.println("Self Driving: Destination Reached");
+          Serial2.println("Destination Reached");
           stop();
           selfDrivingInProgress = false;
           isVehicleTurning = false;

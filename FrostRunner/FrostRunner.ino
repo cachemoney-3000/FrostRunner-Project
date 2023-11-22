@@ -14,8 +14,6 @@
 // Temperature
 DHT dht(DHTPIN, DHTTYPE);
 
-unsigned long lastTemperatureTime = 0; // Variable to track the last temperature send time
-unsigned long temperatureInterval = 5000; // Interval for sending temperature data (5 seconds)
 //******************************************************************************************************   
 // Ultrasonic Sensons, Collision Avoidance
 int trigPin[NUM_ULTRASONIC_SENSORS];  // Array of trigger pins
@@ -23,7 +21,6 @@ int echoPin[NUM_ULTRASONIC_SENSORS];  // Array of echo pins
 
 long ultrasonic_duration, ultrasonic_cm;
 
-boolean followEnabled = false;
 const unsigned long sensorReadInterval = 500; // Interval to read sensors (in milliseconds)
 unsigned long lastSensorReadTime = 0; // Variable to store the last time sensors were read
 //******************************************************************************************************                                                                  
@@ -45,12 +42,12 @@ QMC5883LCompass compass;
 int steeringSpeed = 255;
 int motorSpeed = 255;
 
-unsigned int motorStartTime = 0;  // Variable to store the time when the steering command was triggered
+unsigned long motorStartTime = 0;  // Variable to store the time when the steering command was triggered
 
 // Steering
 bool steeringReleased = true;  // Flag to track whether the motor has been released
 int steeringLocation = 0;  // Variable to track the steering location
-unsigned int steeringRunDuration = STEERING_TIME_THRESHOLD;  // Threshold for steering
+unsigned long steeringRunDuration = STEERING_TIME_THRESHOLD;  // Threshold for steering
 
 // Define flag variable for motor direction
 bool motorDirectionForward = false;
@@ -58,20 +55,24 @@ bool motorDirectionReverse = false;
 
 // Self Driving
 bool isVehicleTurning = false;
+float targetLatitude = 0; // = 28.59108000;
+float targetLongitude = 0; // = -81.46820800;
+bool turnOnLights = false;
 
 void setup()
 {
-  // Start the Arduino hardware serial port at 9600 baud
+  // Start the Arduino hardware serial port at 115200 baud
   Serial.begin(115200);                                            // Serial 0 is for communication with the computer
 
-  // Start the software serial port at the GPS's default baud (18, 19)
-  Serial1.begin(9600);  // GPS
-  Serial2.begin(9600);  // Bluetooth, Communication with Phone 
-  Serial.println("Mega up ");  // SERIAL PRINTS
+  Serial1.begin(9600);  // Serial 1 = GPS
+  Serial2.begin(9600);  // Serial 2 = Bluetooth  
+  
 
   Wire.begin();
   compass.init(); // Initialize the Compass.
-  //Startup();  // Startup GPS Procedure
+  
+  //Startup();
+  Serial.println("Mega up ");  // SERIAL PRINTS
 
   // Rear Motors
   pinMode(REAR_MOTOR_IN1, OUTPUT);
@@ -104,21 +105,29 @@ void setup()
   // Temperature
   dht.begin();
 
-  wdt_enable(WDTO_1S); // Initialize the watchdog timer with a 1-second timeout
+  pinMode(LEDPIN, OUTPUT);
+
+  compass.setSmoothing(3,true);  
+
+  wdt_enable(WDTO_2S); // Initialize the watchdog timer with a 2-second timeout
+
+  Serial.println("START");
 }
 
 String result = "";
 void loop()
 {
+  compass.read(); // Keep reading the compass
   wdt_reset(); // Prevent the reset
   /**
    * Steering release
    * Check if it's time to stop the steering motor
   */
   if (!steeringReleased && (millis() - motorStartTime >= steeringRunDuration)) {
-    //Serial.println("Release");
-    steeringRelease();  // Stop the motor
-    steeringReleased = true;  // Set the steeringReleased flag to true
+      //Serial.println("Release");
+      steeringRelease();  // Stop the motor
+      steeringReleased = true;  // Set the steeringReleased flag to true
+      Serial.println("STEER RELEASED " + String(millis() - motorStartTime) + " " + String(millis()) + " " + String(motorStartTime));
   }
 
   /**
@@ -130,9 +139,9 @@ void loop()
     lastSensorReadTime = currentTime;
     // Read the back sensor
     float distance = readUltrasonicSensor(trigPin[2], echoPin[2]);
-    /* Serial.print("Back Sensor: ");
+    Serial.print("Back Sensor: ");
     Serial.print(distance);
-    Serial.println(" ultrasonic_cm"); */
+    Serial.println(" ultrasonic_cm");
 
     // Check if the back sensor reading is below the collision threshold
     if (distance < COLLISION_THRESHOLD) {
@@ -148,11 +157,11 @@ void loop()
     // Read the front sensors
     for (int i = 0; i < 2; i++) { // Loop through front sensors (0 and 1)
       float distance = readUltrasonicSensor(trigPin[i], echoPin[i]);
-      /* Serial.print("Front Sensor ");
+      Serial.print("Front Sensor ");
       Serial.print(i + 1);
       Serial.print(": ");
       Serial.print(distance);
-      Serial.println(" ultrasonic_cm"); */
+      Serial.println(" ultrasonic_cm");
 
       if (distance < COLLISION_THRESHOLD) {
         Serial.print("Collision detected at");
@@ -174,13 +183,14 @@ void loop()
    * 
    */
   while (Serial2.available() > 0 || selfDrivingInProgress){
+    wdt_reset(); // Prevent the reset
     String data = Serial2.readStringUntil('\n');
     Serial.println(data);
     // Trigger a watchdog timer reset
     if(data.startsWith("R")){
       stop();
       straightenWheel();
-      delay(2000); // Force a reset
+      delay(3000); // Force a reset
     }
 
     if(selfDrivingInProgress){
@@ -201,21 +211,24 @@ void loop()
             forward(motorSpeed);
           }
           break;
+
         case 2:
           // Reverse
           if (!motorDirectionReverse  && !selfDrivingInProgress) {
             reverse(motorSpeed);
           }
           break;
+
         case 9:
           // Stop
           stop();
           if (selfDrivingInProgress){
             selfDrivingInProgress = false;
             globalTimeout = GLOBAL_SELF_DRIVING_TIMEOUT;
+            isVehicleTurning = false;
           }
-
           break;
+
         default:
           break;
       }
@@ -268,7 +281,7 @@ void loop()
       }
 
       // Steering Threshold Adjustment
-      else if(data.startsWith("T")  && !selfDrivingInProgress){
+      /* else if(data.startsWith("T")  && !selfDrivingInProgress){
         // Set the new motor speed
         steeringRunDuration += data.substring(1).toInt();
         // Limit the range of steeringRunDuration to 50-300
@@ -280,35 +293,61 @@ void loop()
         motorDirectionForward = false;
         motorDirectionReverse = false;
         stop();
+      } */
+
+      else if(data.startsWith("T")){
+        if (turnOnLights) {
+          // Turn off the LED
+          digitalWrite(LEDPIN, LOW);
+          turnOnLights = false;
+        }
+        else {
+          // Turn on the LED
+          digitalWrite(LEDPIN, HIGH);
+          turnOnLights = true;
+        }
       }
 
       // Summon Instructions, Get the GPS coordinate from user's phone
       else if(data.startsWith("X")){
-        bool isSatelliteAcquired = checkSatellites();
+        Startup();  // Startup GPS Procedure
+
+        Location loc = getGPS();
+        bool locationAcquired = loc.latitude != 0 && loc.longitude != 0;
+
         String receivedCoordinates = data.substring(1);
         int separatorIndex = receivedCoordinates.indexOf('/');
         
-
+        Serial.println(" Longitude: " + String(loc.longitude , 8));
+        Serial.println(" Latitude: " + String(loc.latitude, 8)); 
         // Split the location string into longitude and latitude
-        if (!selfDrivingInProgress && isSatelliteAcquired && separatorIndex != -1) {
-          String longitudeStr = data.substring(0, separatorIndex);
-          String latitudeStr = data.substring(separatorIndex + 1);
+        if (!selfDrivingInProgress && locationAcquired && separatorIndex != -1) {
+          Serial2.println(String(Number_of_SATS) + " Satellites Acquired");     
+
+          String longitudeStr = data.substring(1, separatorIndex);
+          String latitudeStr = data.substring(separatorIndex + 2);
 
           // Convert latitude and longitude to float values
-          float newTargetLatitude = latitudeStr.toDouble();
-          float newTargetLongitude = longitudeStr.toDouble();
-          
+          float newTargetLatitude = latitudeStr.toFloat();
+          float newTargetLongitude = longitudeStr.toFloat();
+
           phoneLoc.latitude = newTargetLatitude;
           phoneLoc.longitude = newTargetLongitude;
+
+          //phoneLoc.latitude = 28.59109411244622;
+          //phoneLoc.longitude = -81.46732786360467;
 
           // Apply smoothing to try to increase the precision of the coordinates
           phoneLoc = applyMovingAverageFilter(phoneLoc);
 
-          Serial.println("Target Longitude: " + String(phoneLoc.longitude, 8));
+          Serial.println("Target Longitude: " + String(phoneLoc.longitude , 8));
           Serial.println("Target Latitude: " + String(phoneLoc.latitude, 8));
 
-          driveTo(phoneLoc);
           selfDrivingInProgress = true;
+          driveTo(phoneLoc);
+        }
+        else {
+          Serial2.println("No Satellites Found");   
         }
       }
     }

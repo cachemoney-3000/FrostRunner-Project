@@ -1,44 +1,51 @@
 // Get Latest GPS coordinates
-bool checkGPS()
-{
-  while (Serial1.available()){
-    if(gps.encode(Serial1.read())){
+bool checkGPS() {
+  while (Serial1.available() > 0) {
+    wdt_reset(); // Prevent the reset
+    if (gps.encode(Serial1.read())) {
       return true;
-    };
+    }
   }
   return false;
-} 
-
-// Get and process GPS data
-Location gpsdump() {
-  Location robotLoc;
-  robotLoc.latitude = gps.location.lat();
-  robotLoc.longitude = gps.location.lng();
-
-  return robotLoc;
 }
+
 
 Location getGPS() {
-  unsigned long start = millis();
-  while (millis() - start < GPS_UPDATE_INTERVAL) {
-    // If we recieved new location then take the coordinates and pack them into a struct
-    if (checkGPS())
-      return gpsdump();
+  Location coordinates;
 
-    delay(100); // Small delay to allow the GPS module to provide updated data
+  unsigned long start = millis();
+  while (millis() - start < GPS_TIMEOUT) {
+    wdt_reset(); // Prevent the reset
+    // If we recieved new location then take the coordinates and pack them into a struct
+    if (checkGPS()){
+      coordinates.latitude = gps.location.lat();
+      coordinates.longitude = gps.location.lng();
+      return coordinates;
+    }
+      
   }
 
-  Location robotLoc;
-  robotLoc.latitude = 0.0;
-  robotLoc.longitude = 0.0;
-  
-  return robotLoc;
+  coordinates.latitude = 0;
+  coordinates.longitude = 0;
+
+  return coordinates;
 }
 
-Location applyMovingAverageFilter(struct Location &newLocation) {
+Location applyMovingAverageFilter(Location newLocation) {
   newLocation.latitude = (1 - GPS_FILTER_WEIGHT) * newLocation.latitude + GPS_FILTER_WEIGHT * newLocation.latitude;
   newLocation.longitude = (1 - GPS_FILTER_WEIGHT) * newLocation.longitude + GPS_FILTER_WEIGHT * newLocation.longitude;
   
   return newLocation;
 }
 
+bool checkSatellites() {
+  checkGPS();
+  if (Number_of_SATS <= 4) {
+    Serial2.println("No Satellites Found");
+    return false;
+  }
+  else {
+    Serial2.println(String(Number_of_SATS) + " Satellites Acquired");     
+    return true;
+  }
+}

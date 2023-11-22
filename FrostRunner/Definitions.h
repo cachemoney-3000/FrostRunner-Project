@@ -1,19 +1,6 @@
-// You must then add your 'Declination Angle' to the compass, which is the 'Error' of the magnetic field in your location.
-// Find yours here: http://www.magnetic-declination.com/
-// Mine is: 13° 24' E (Positive), which is ~13 Degrees, or (which we need) 0.23 radians
-#define DECLINATION_ANGLE -0.07f
-
-// The offset of the mounting position to true north
-// It would be best to run the /examples/magsensor sketch and compare to the compass on your smartphone
-#define COMPASS_OFFSET 0.01f
-
 // How often the GPS should update in MS
 // Keep this above 1000
 #define GPS_UPDATE_INTERVAL 1000
-
-// Number of changes in movement to timeout for GPS waypoints
-// Keeps the robot from driving away if there is a problem
-#define GPS_WAYPOINT_TIMEOUT 25
 
 // Struct to combine our coordinates into one struct for ease of use
 struct Location {
@@ -46,19 +33,19 @@ struct Location {
 #define STEERING_MOTOR_IN4 11
 #define STEERING_MOTOR_ENB 13
 
-#define STEERING_TIME_THRESHOLD 250 // Controls how long the motor will run when steering
-#define SELF_DRIVING_FORWARD_SPEED 200
+#define STEERING_TIME_THRESHOLD 120 // Controls how long the motor will run when steering
+#define SELF_DRIVING_FORWARD_SPEED 220
 #define SELF_DRIVING_REVERSE_SPEED 200
-#define GLOBAL_SELF_DRIVING_TIMEOUT 15 
-#define DISTANCE_TOLERANCE 50.0
-#define BEARING_TOLERANCE 5.0
+#define GLOBAL_SELF_DRIVING_TIMEOUT 20 
 
 // Self Driving
 #define SELF_DRIVING_STEERING_DELAY 1500 // ms delay
 #define GPS_FILTER_WEIGHT 0.2f  // Filter weight (high = noisy, low = stable)
-#define SELF_DRIVING_HEADING_TOLERANCE 30 // degrees
-#define SELF_DRIVING_DISTANCE_TOLERANCE 1.0f // cm
+#define SELF_DRIVING_HEADING_TOLERANCE 160 // degrees
+#define SELF_DRIVING_DISTANCE_TOLERANCE 1.5f // meters
+#define GPS_TIMEOUT 1000
 
 // Temperature Sensor Pins
 #define DHTPIN 50   // Digital pi
-#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+#define LEDPIN 51
+#define DHTTYPE DHT22   // DHT 22  (AM2302), AM23210
