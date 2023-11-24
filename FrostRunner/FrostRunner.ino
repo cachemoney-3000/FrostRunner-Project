@@ -271,7 +271,7 @@ void loop()
       else if(data.startsWith("P")){
         // Call the function to read temperature in Fahrenheit
         float temperatureFahrenheit = readTemperatureFahrenheit();
-        int temperatureInteger = int(floor(temperatureFahrenheit));
+        int temperatureInteger = int(floor(temperatureFahrenheit)) - TEMPERATURE_THRESHOLD;
         // Print the temperature to the primary serial port (for debugging)
         Serial.print(F("Temperature (Fahrenheit): "));
         Serial.println(temperatureInteger);
